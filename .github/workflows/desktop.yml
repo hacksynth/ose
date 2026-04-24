@@ -1,4 +1,4 @@
-﻿name: Desktop CD
+name: Desktop CD
 
 on:
   workflow_dispatch:

@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "https://raw.githubusercontent.com/nicegui-dev/tauri-schema/refs/heads/main/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "OSE default capabilities",
