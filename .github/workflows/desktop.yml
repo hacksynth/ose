@@ -83,6 +83,13 @@ jobs:
           if (Test-Path "$sourceDir/resources") {
             Copy-Item "$sourceDir/resources" "$portableRoot/resources" -Recurse -Force
           }
+          $standaloneSource = "src-tauri/binaries/standalone"
+          $standaloneTarget = "$portableRoot/resources/binaries/standalone"
+          if (!(Test-Path "$standaloneSource/start.js")) {
+            throw "Next.js standalone sidecar not found at $standaloneSource"
+          }
+          New-Item -ItemType Directory -Force (Split-Path $standaloneTarget) | Out-Null
+          Copy-Item $standaloneSource $standaloneTarget -Recurse -Force
           @"
           OSE Windows Portable
 
