@@ -131,13 +131,15 @@ fn start_next_server(app: &AppHandle) -> Result<u16, String> {
 
 fn stop_next_server(app: &AppHandle) {
     let state = app.state::<ServerState>();
-    if let Ok(mut runtime) = state.0.lock() {
-        if let Some(mut child) = runtime.child.take() {
-            let _ = child.kill();
-            let _ = child.wait();
-        }
-        runtime.port = None;
+    let Ok(mut runtime) = state.0.lock() else {
+        return;
+    };
+
+    if let Some(mut child) = runtime.child.take() {
+        let _ = child.kill();
+        let _ = child.wait();
     }
+    runtime.port = None;
 }
 
 fn resolve_data_dir(app: &AppHandle) -> Result<PathBuf, String> {
