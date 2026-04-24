@@ -31,6 +31,17 @@ npm run dev
 
 访问 `http://localhost:3000/register` 注册账号，登录后进入 `/dashboard`。
 
+## Docker Compose 启动
+
+```bash
+cp .env.example .env
+docker compose up -d --build
+```
+
+访问 `http://localhost:3000`。容器内默认使用 SQLite，数据库文件保存在 `ose-data` volume 中；启动时会自动执行 `prisma migrate deploy`。
+
+推送到 `main` 分支或创建 `v*` tag 时，GitHub Actions 会构建 Docker 镜像并发布到 GitHub Container Registry：`ghcr.io/hacksynth/ose`。
+
 常用命令：
 
 ```bash

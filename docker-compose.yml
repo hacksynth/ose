@@ -1,0 +1,22 @@
+services:
+  ose:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ose:local
+    container_name: ose
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: file:/app/data/ose.db
+      AUTH_URL: http://localhost:3000
+      PORT: 3000
+      HOSTNAME: 0.0.0.0
+    ports:
+      - "3000:3000"
+    volumes:
+      - ose-data:/app/data
+
+volumes:
+  ose-data:

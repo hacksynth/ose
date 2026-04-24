@@ -1,0 +1,15 @@
+.git
+.github
+.codex
+.next
+node_modules
+out
+src-tauri/target
+src-tauri/binaries
+.env
+.env.*
+!.env.example
+npm-debug.log*
+.next-dev.log
+.next-dev.err.log
+tsconfig.tsbuildinfo
