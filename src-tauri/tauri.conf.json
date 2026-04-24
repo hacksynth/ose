@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/tauri-apps/tauri/dev/crates/tauri-config-schema/schema.json",
-  "productName": "OSE 软考备考",
+  "productName": "OSE",
   "version": "0.1.0",
   "identifier": "com.ose.softwareexam",
   "build": {
@@ -37,6 +37,8 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": ["binaries/standalone/**/*"]
+    "resources": [
+      "binaries/standalone/**/*"
+    ]
   }
 }
