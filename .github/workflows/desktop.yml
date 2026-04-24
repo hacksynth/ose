@@ -69,6 +69,29 @@ jobs:
       - name: Build Tauri app
         run: npm run tauri:build
 
+      - name: Create Windows portable zip
+        if: matrix.platform == 'windows-latest'
+        shell: powershell
+        run: |
+          $version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          $sourceDir = "src-tauri/target/release"
+          $portableRoot = "$sourceDir/portable/OSE_${version}_windows_x64_portable"
+          $zipPath = "$sourceDir/bundle/portable/OSE_${version}_windows_x64_portable.zip"
+          New-Item -ItemType Directory -Force $portableRoot | Out-Null
+          New-Item -ItemType Directory -Force (Split-Path $zipPath) | Out-Null
+          Copy-Item "$sourceDir/ose.exe" "$portableRoot/OSE.exe" -Force
+          if (Test-Path "$sourceDir/resources") {
+            Copy-Item "$sourceDir/resources" "$portableRoot/resources" -Recurse -Force
+          }
+          @"
+          OSE Windows Portable
+
+          1. Keep OSE.exe and the resources directory together.
+          2. Node.js 20+ must be installed and available in PATH.
+          3. User data is stored in the system app data directory.
+          "@ | Set-Content -Encoding UTF8 "$portableRoot/README.txt"
+          Compress-Archive -Path "$portableRoot/*" -DestinationPath $zipPath -Force
+
       - name: Upload desktop artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -80,6 +103,7 @@ jobs:
             src-tauri/target/release/bundle/deb/*.deb
             src-tauri/target/release/bundle/appimage/*.AppImage
             src-tauri/target/release/bundle/rpm/*.rpm
+            src-tauri/target/release/bundle/portable/*.zip
           if-no-files-found: error
 
   release:
