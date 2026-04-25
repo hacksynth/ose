@@ -19,7 +19,7 @@ Open-source AI-powered exam preparation platform for China's Software Profession
 
 [中文文档](README_CN.md)
 
-> Product screenshot placeholder: add a dashboard screenshot here once the public demo stabilizes.
+![OSE landing page screenshot](docs/assets/screenshots/landing.png)
 
 ## What is OSE?
 
@@ -72,12 +72,9 @@ See [docs/self-hosting.md](docs/self-hosting.md) for Docker Compose, VPS systemd
 
 ## Screenshots / Demo
 
-| Area         | Preview                                                           |
-| ------------ | ----------------------------------------------------------------- |
-| Dashboard    | Screenshot placeholder for learning progress and pass probability |
-| Practice     | Screenshot placeholder for multiple-choice and case questions     |
-| AI assistant | Screenshot placeholder for explanation, grading, and diagnosis    |
-| Desktop app  | Screenshot placeholder for the Tauri shell                        |
+![OSE Chinese landing page](docs/assets/screenshots/landing.png)
+
+More product screenshots for the dashboard, practice flow, AI assistant, and Tauri desktop shell will be added as the demo data and UI stabilize.
 
 ## Roadmap
 
