@@ -72,9 +72,28 @@ See [docs/self-hosting.md](docs/self-hosting.md) for Docker Compose, VPS systemd
 
 ## Screenshots / Demo
 
-![OSE Chinese landing page](docs/assets/screenshots/landing.png)
+| Landing                                         | Dashboard                                           |
+| ----------------------------------------------- | --------------------------------------------------- |
+| ![Landing](docs/assets/screenshots/landing.png) | ![Dashboard](docs/assets/screenshots/dashboard.png) |
 
-More product screenshots for the dashboard, practice flow, AI assistant, and Tauri desktop shell will be added as the demo data and UI stabilize.
+| Practice center                                   | Knowledge tree                                      |
+| ------------------------------------------------- | --------------------------------------------------- |
+| ![Practice](docs/assets/screenshots/practice.png) | ![Knowledge](docs/assets/screenshots/knowledge.png) |
+
+| Mock exam                                 | Study plan                                |
+| ----------------------------------------- | ----------------------------------------- |
+| ![Exam](docs/assets/screenshots/exam.png) | ![Plan](docs/assets/screenshots/plan.png) |
+
+| Learning analysis                                 |
+| ------------------------------------------------- |
+| ![Analysis](docs/assets/screenshots/analysis.png) |
+
+Screenshots are captured by `scripts/capture-screenshots.mjs` against a local dev server. Re-run after UI changes:
+
+```bash
+npm run dev
+node scripts/capture-screenshots.mjs
+```
 
 ## Roadmap
 
