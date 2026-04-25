@@ -72,21 +72,17 @@ See [docs/self-hosting.md](docs/self-hosting.md) for Docker Compose, VPS systemd
 
 ## Screenshots / Demo
 
-| Landing                                         | Dashboard                                           |
-| ----------------------------------------------- | --------------------------------------------------- |
-| ![Landing](docs/assets/screenshots/landing.png) | ![Dashboard](docs/assets/screenshots/dashboard.png) |
+| Dashboard                                           | Practice center                                   |
+| --------------------------------------------------- | ------------------------------------------------- |
+| ![Dashboard](docs/assets/screenshots/dashboard.png) | ![Practice](docs/assets/screenshots/practice.png) |
 
-| Practice center                                   | Knowledge tree                                      |
-| ------------------------------------------------- | --------------------------------------------------- |
-| ![Practice](docs/assets/screenshots/practice.png) | ![Knowledge](docs/assets/screenshots/knowledge.png) |
+| Knowledge tree                                      | Mock exam                                 |
+| --------------------------------------------------- | ----------------------------------------- |
+| ![Knowledge](docs/assets/screenshots/knowledge.png) | ![Exam](docs/assets/screenshots/exam.png) |
 
-| Mock exam                                 | Study plan                                |
-| ----------------------------------------- | ----------------------------------------- |
-| ![Exam](docs/assets/screenshots/exam.png) | ![Plan](docs/assets/screenshots/plan.png) |
-
-| Learning analysis                                 |
-| ------------------------------------------------- |
-| ![Analysis](docs/assets/screenshots/analysis.png) |
+| Study plan                                | Learning analysis                                 |
+| ----------------------------------------- | ------------------------------------------------- |
+| ![Plan](docs/assets/screenshots/plan.png) | ![Analysis](docs/assets/screenshots/analysis.png) |
 
 Screenshots are captured by `scripts/capture-screenshots.mjs` against a local dev server. Re-run after UI changes:
 
