@@ -31,7 +31,7 @@ The core promise is simple: **AI-Powered**, **Open Source**, and **Self-hostable
 
 ## Features
 
-- 📚 **Smart question bank**: multiple-choice questions and case analysis questions covering the Software Designer syllabus.
+- 📚 **Built-in question bank**: 41 历年真题 (2014–2025) — 1483 multiple-choice questions and 96 case scenarios with 263 sub-questions, AI-classified into a 56-node knowledge tree, baked into the seed so a fresh `db:seed` immediately produces a usable study workspace.
 - 🤖 **AI assistance**: Claude, OpenAI, Gemini, and custom endpoints for explanations, grading, question generation, diagnosis, and study plans.
 - 📊 **Learning analytics**: mastery heatmaps, weak-area diagnosis, predicted scores, and pass probability evaluation.
 - 📝 **Mock exams**: realistic exam sessions with countdown timers, answer sheets, and result reports.
@@ -62,7 +62,7 @@ npx prisma db seed
 npm run dev
 ```
 
-Open `http://localhost:3000`, create an account, and start practicing.
+Open `http://localhost:3000`, create an account, and start practicing. The seed step loads 41 历年真题 / 1579 questions / 96 case scenarios from `data/51cto-seed.json` (built from `data/51cto-exams/`); see `data/51cto-exams/INDEX.md` for the source pipeline and licensing notes.
 
 ## Self-hosting Guide
 
@@ -98,7 +98,7 @@ node scripts/capture-screenshots.mjs
 - [x] Phase 3: AI 辅助（讲解/批改/出题/诊断/学习计划）
 - [x] Tauri 桌面版
 - [ ] 更多软考科目支持（信息系统项目管理师等）
-- [ ] 真题 PDF 自动导入解析
+- [x] 历年真题内置(2014–2025,41 套,1579 题)
 - [ ] PostgreSQL 生产部署支持
 - [ ] Docker Compose 一键部署
 - [ ] 国际化（i18n）
