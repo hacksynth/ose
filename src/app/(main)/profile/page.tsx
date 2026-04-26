@@ -28,6 +28,14 @@ function heatClass(count: number) {
   return 'bg-primary';
 }
 
+function daysUntil(date: Date) {
+  const todayKey = getChinaDateKey(new Date());
+  const targetKey = getChinaDateKey(date);
+  const todayMs = new Date(`${todayKey}T00:00:00+08:00`).getTime();
+  const targetMs = new Date(`${targetKey}T00:00:00+08:00`).getTime();
+  return Math.max(0, Math.round((targetMs - todayMs) / 86_400_000));
+}
+
 export default async function ProfilePage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
@@ -49,6 +57,9 @@ export default async function ProfilePage() {
   const total = answers.length;
   const correct = answers.filter((answer) => answer.isCorrect).length;
   const dates = answers.map((answer) => answer.createdAt);
+  const studiedDays = new Set(dates.map(getChinaDateKey)).size;
+  const longestStreak = getLongestStreak(dates);
+  const continuousDays = getContinuousDays(dates);
   const dateKeys = getRecentDateKeys(90);
   const heatMap = new Map(dateKeys.map((key) => [key, 0]));
   answers.forEach((answer) => {
@@ -91,6 +102,37 @@ export default async function ProfilePage() {
               </p>
             </div>
           </div>
+          <div className="mt-7 rounded-3xl bg-primary-soft p-5">
+            <p className="text-sm font-black text-primary">目标考试</p>
+            {user.targetExamDate ? (
+              <>
+                <p className="mt-2 text-2xl font-black text-navy">
+                  {user.targetExamDate.toISOString().slice(0, 10)}
+                </p>
+                <p className="mt-1 font-semibold text-muted">
+                  距离目标还有{' '}
+                  <span className="font-black text-primary">{daysUntil(user.targetExamDate)}</span>{' '}
+                  天
+                </p>
+              </>
+            ) : (
+              <p className="mt-2 font-semibold text-muted">还未设置，右侧可配置目标考试时间。</p>
+            )}
+          </div>
+          <div className="mt-5 grid grid-cols-3 gap-3">
+            <div className="rounded-2xl bg-softYellow p-4">
+              <p className="text-xs font-black text-muted">连续</p>
+              <p className="mt-2 text-2xl font-black text-navy">{continuousDays}天</p>
+            </div>
+            <div className="rounded-2xl bg-softGreen p-4">
+              <p className="text-xs font-black text-muted">学习</p>
+              <p className="mt-2 text-2xl font-black text-navy">{studiedDays}天</p>
+            </div>
+            <div className="rounded-2xl bg-softRose p-4">
+              <p className="text-xs font-black text-muted">最长</p>
+              <p className="mt-2 text-2xl font-black text-navy">{longestStreak}天</p>
+            </div>
+          </div>
         </Card>
         <div className="space-y-5">
           <ProfileForms
@@ -114,13 +156,11 @@ export default async function ProfilePage() {
         </Card>
         <Card className="bg-softGreen p-6">
           <p className="font-black text-muted">累计学习天数</p>
-          <p className="mt-3 text-5xl font-black text-navy">
-            {new Set(dates.map(getChinaDateKey)).size}
-          </p>
+          <p className="mt-3 text-5xl font-black text-navy">{studiedDays}</p>
         </Card>
         <Card className="bg-softRose p-6">
           <p className="font-black text-muted">最长连续学习</p>
-          <p className="mt-3 text-5xl font-black text-navy">{getLongestStreak(dates)}天</p>
+          <p className="mt-3 text-5xl font-black text-navy">{longestStreak}天</p>
         </Card>
       </section>
 
