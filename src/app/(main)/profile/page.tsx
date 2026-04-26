@@ -35,7 +35,7 @@ export default async function ProfilePage() {
   const [user, answers, roots] = await Promise.all([
     prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { name: true, email: true, createdAt: true },
+      select: { name: true, email: true, targetExamDate: true, createdAt: true },
     }),
     getChoiceAnswerEvents(session.user.id),
     prisma.knowledgePoint.findMany({
@@ -93,7 +93,10 @@ export default async function ProfilePage() {
           </div>
         </Card>
         <div className="space-y-5">
-          <ProfileForms initialName={user.name} />
+          <ProfileForms
+            initialName={user.name}
+            initialTargetExamDate={user.targetExamDate?.toISOString().slice(0, 10) ?? null}
+          />
           <AISettingsCard />
         </div>
       </section>
