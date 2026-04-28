@@ -84,19 +84,19 @@ export default async function ProfilePage() {
   });
 
   return (
-    <main className="mx-auto mt-8 max-w-7xl space-y-8">
+    <main className="mx-auto mt-6 max-w-7xl space-y-6 md:mt-8 md:space-y-8">
       <section className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr]">
-        <Card className="bg-white/90 p-8">
-          <div className="flex items-center gap-5">
-            <Avatar className="h-20 w-20">
+        <Card className="bg-white/90 p-6 sm:p-8">
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+            <Avatar className="h-20 w-20 shrink-0">
               <AvatarFallback className="text-3xl">
                 {user.name.slice(0, 1).toUpperCase()}
               </AvatarFallback>
             </Avatar>
-            <div>
+            <div className="min-w-0">
               <p className="text-sm font-black text-primary">Profile</p>
-              <h1 className="text-4xl font-black text-navy">{user.name}</h1>
-              <p className="mt-1 font-semibold text-muted">{user.email}</p>
+              <h1 className="text-3xl font-black text-navy sm:text-4xl">{user.name}</h1>
+              <p className="mt-1 break-all font-semibold text-muted">{user.email}</p>
               <p className="mt-2 text-sm font-bold text-muted">
                 注册于 {formatDate(user.createdAt)}
               </p>
@@ -119,7 +119,7 @@ export default async function ProfilePage() {
               <p className="mt-2 font-semibold text-muted">还未设置，右侧可配置目标考试时间。</p>
             )}
           </div>
-          <div className="mt-5 grid grid-cols-3 gap-3">
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
             <div className="rounded-2xl bg-softYellow p-4">
               <p className="text-xs font-black text-muted">连续</p>
               <p className="mt-2 text-2xl font-black text-navy">{continuousDays}天</p>
@@ -143,29 +143,29 @@ export default async function ProfilePage() {
         </div>
       </section>
 
-      <section className="grid gap-4 md:grid-cols-4">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Card className="bg-softYellow p-6">
           <p className="font-black text-muted">累计做题</p>
-          <p className="mt-3 text-5xl font-black text-navy">{total}</p>
+          <p className="mt-3 text-4xl font-black text-navy sm:text-5xl">{total}</p>
         </Card>
         <Card className="bg-softBlue p-6">
           <p className="font-black text-muted">累计正确率</p>
-          <p className="mt-3 text-5xl font-black text-navy">
+          <p className="mt-3 text-4xl font-black text-navy sm:text-5xl">
             {total ? Math.round((correct / total) * 100) : 0}%
           </p>
         </Card>
         <Card className="bg-softGreen p-6">
           <p className="font-black text-muted">累计学习天数</p>
-          <p className="mt-3 text-5xl font-black text-navy">{studiedDays}</p>
+          <p className="mt-3 text-4xl font-black text-navy sm:text-5xl">{studiedDays}</p>
         </Card>
         <Card className="bg-softRose p-6">
           <p className="font-black text-muted">最长连续学习</p>
-          <p className="mt-3 text-5xl font-black text-navy">{longestStreak}天</p>
+          <p className="mt-3 text-4xl font-black text-navy sm:text-5xl">{longestStreak}天</p>
         </Card>
       </section>
 
       <section className="grid gap-6 lg:grid-cols-2">
-        <Card className="p-7 hover:translate-y-0">
+        <Card className="p-5 hover:translate-y-0 sm:p-7">
           <h2 className="text-2xl font-black text-navy">知识点掌握</h2>
           <div className="mt-6 space-y-4">
             {knowledgeStats.map((item) => (
@@ -186,7 +186,7 @@ export default async function ProfilePage() {
             ))}
           </div>
         </Card>
-        <Card className="p-7 hover:translate-y-0">
+        <Card className="p-5 hover:translate-y-0 sm:p-7">
           <h2 className="text-2xl font-black text-navy">最近 90 天学习热力图</h2>
           <div className="mt-6 grid grid-flow-col grid-rows-7 gap-1 overflow-x-auto pb-2">
             {dateKeys.map((date) => {

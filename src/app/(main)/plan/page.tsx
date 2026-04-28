@@ -42,13 +42,13 @@ export default async function PlanPage({
   const exam = getNextExamCountdown();
   const defaultTargetDate = user?.targetExamDate ?? exam.date;
   return (
-    <main className="mx-auto mt-8 max-w-7xl space-y-8">
-      <section className="rounded-[2rem] bg-white/90 p-8 shadow-soft">
+    <main className="mx-auto mt-6 max-w-7xl space-y-6 md:mt-8 md:space-y-8">
+      <section className="rounded-[1.5rem] bg-white/90 p-6 shadow-soft sm:rounded-[2rem] sm:p-8">
         <p className="mb-3 text-sm font-black text-primary">Study Plan</p>
-        <h1 className="text-4xl font-black text-navy md:text-5xl">智能学习计划</h1>
+        <h1 className="text-3xl font-black text-navy sm:text-4xl md:text-5xl">智能学习计划</h1>
         <p className="mt-3 font-semibold text-muted">根据薄弱点和考试日期生成可执行的每日任务。</p>
       </section>
-      <Card className="p-7 hover:translate-y-0">
+      <Card className="p-5 hover:translate-y-0 sm:p-7">
         <h2 className="mb-5 text-2xl font-black text-navy">生成新计划</h2>
         <PlanGenerateForm defaultDate={defaultTargetDate.toISOString().slice(0, 10)} />
       </Card>
@@ -58,7 +58,7 @@ export default async function PlanPage({
           const ratio = plan.days.length ? (completed / plan.days.length) * 100 : 0;
           return (
             <article key={plan.id} className="ose-card relative p-6">
-              <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start justify-between gap-3 sm:gap-4">
                 <Link href={`/plan/${plan.id}`} className="min-w-0 flex-1">
                   <span className="rounded-full bg-primary-soft px-3 py-1 text-xs font-black text-primary">
                     {plan.status}

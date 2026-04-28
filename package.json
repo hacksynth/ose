@@ -45,6 +45,8 @@
     "prisma:studio": "prisma studio",
     "tauri:dev": "tauri dev",
     "tauri:build": "tauri build",
+    "tauri:android:init": "tauri android init --ci",
+    "tauri:android:build:apk": "tauri android build --apk",
     "tauri:prepare": "node scripts/prepare-sidecar.js",
     "tauri:icons": "tauri icon src-tauri/icons/app-icon.png",
     "screenshots": "node scripts/capture-screenshots.mjs",

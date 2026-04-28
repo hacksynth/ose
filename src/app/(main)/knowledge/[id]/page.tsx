@@ -36,16 +36,16 @@ export default async function KnowledgeDetailPage({ params }: { params: Promise<
   const cases = questions.filter((q) => q.type === 'CASE_ANALYSIS');
   const accuracy = answerTotal ? Math.round((answerCorrect / answerTotal) * 100) : 0;
   return (
-    <main className="mx-auto mt-8 max-w-7xl space-y-6">
+    <main className="mx-auto mt-6 max-w-7xl space-y-6 md:mt-8">
       <Button asChild variant="secondary">
         <Link href="/knowledge">
           <ArrowLeft className="h-4 w-4" />
           返回知识点
         </Link>
       </Button>
-      <section className="rounded-[2rem] bg-white/90 p-8 shadow-soft">
+      <section className="rounded-[1.5rem] bg-white/90 p-6 shadow-soft sm:rounded-[2rem] sm:p-8">
         <p className="mb-3 text-sm font-black text-primary">{topic.parent?.name ?? '一级知识点'}</p>
-        <h1 className="text-4xl font-black text-navy md:text-5xl">{topic.name}</h1>
+        <h1 className="text-3xl font-black text-navy sm:text-4xl md:text-5xl">{topic.name}</h1>
         <p className="mt-3 font-semibold text-muted">
           {topic.description ?? '软考软件设计师核心考点'}
         </p>
@@ -66,6 +66,7 @@ export default async function KnowledgeDetailPage({ params }: { params: Promise<
         <div className="mt-6">
           <StartPracticeButton
             payload={{ mode: 'topic', topicId: id, limit: choices.length || 20 }}
+            className="w-full sm:w-auto"
           >
             练习本知识点
           </StartPracticeButton>

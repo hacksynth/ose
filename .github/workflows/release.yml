@@ -250,10 +250,103 @@ jobs:
         shell: bash
         run: find src-tauri/target -maxdepth 5 -type f 2>/dev/null || true
 
+  build-android-apk:
+    name: Build Android APK
+    runs-on: ubuntu-22.04
+    env:
+      ANDROID_NDK_VERSION: 27.0.12077973
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi,i686-linux-android,x86_64-linux-android
+
+      - name: Cache Rust
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install Android NDK
+        shell: bash
+        run: |
+          set -euxo pipefail
+          yes | sdkmanager --licenses >/dev/null
+          sdkmanager --install "ndk;${ANDROID_NDK_VERSION}"
+          echo "ANDROID_NDK_HOME=${ANDROID_HOME}/ndk/${ANDROID_NDK_VERSION}" >> "$GITHUB_ENV"
+          echo "NDK_HOME=${ANDROID_HOME}/ndk/${ANDROID_NDK_VERSION}" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Tauri icons
+        run: npm run tauri:icons
+
+      - name: Initialize Android project
+        shell: bash
+        run: |
+          set -euxo pipefail
+          if [ ! -d src-tauri/gen/android ]; then
+            npm run tauri:android:init
+          fi
+
+      - name: Build APK
+        run: npm run tauri:android:build:apk
+
+      - name: Prepare Android assets
+        shell: bash
+        run: |
+          set -euxo pipefail
+          mkdir -p release-assets
+          VERSION="${GITHUB_REF_NAME}"
+          mapfile -t APKS < <(find src-tauri/gen/android -type f -name "*.apk" | sort)
+          if [ "${#APKS[@]}" -eq 0 ]; then
+            echo "No Android APK found" >&2
+            exit 1
+          fi
+          index=1
+          for apk in "${APKS[@]}"; do
+            flavor=$(basename "$apk" .apk | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9._-' '-')
+            if [ "${#APKS[@]}" -eq 1 ]; then
+              cp "$apk" "release-assets/OSE-${VERSION}-Android.apk"
+            else
+              cp "$apk" "release-assets/OSE-${VERSION}-Android-${index}-${flavor}.apk"
+              index=$((index + 1))
+            fi
+          done
+          ls -la release-assets
+
+      - name: Upload Android release artifacts to workflow
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-assets-android-apk
+          path: release-assets/*.apk
+          if-no-files-found: error
+
+      - name: List generated Android files for debugging
+        if: always()
+        shell: bash
+        run: find src-tauri/gen/android -maxdepth 8 -type f 2>/dev/null || true
+
   publish-release:
     name: Publish GitHub Release
     runs-on: ubuntu-22.04
-    needs: build
+    needs: [build, build-android-apk]
     steps:
       - name: Download built release artifacts
         uses: actions/download-artifact@v4
@@ -283,6 +376,7 @@ jobs:
             - Windows: `OSE-${{ github.ref_name }}-Windows-x64.msi`, `OSE-${{ github.ref_name }}-Windows-x64-Setup.exe`, or `OSE-${{ github.ref_name }}-Windows-x64-Portable.zip`
             - macOS: `OSE-${{ github.ref_name }}-macOS-universal.dmg` or `OSE-${{ github.ref_name }}-macOS-universal.zip`
             - Linux: `OSE-${{ github.ref_name }}-Linux-x86_64.AppImage`, `.deb`, or `.rpm`
+            - Android: `OSE-${{ github.ref_name }}-Android.apk`
 
             Windows portable builds require Node.js 20+ in PATH because the Next.js standalone server is launched locally.
           files: release-assets/*

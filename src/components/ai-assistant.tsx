@@ -257,11 +257,16 @@ export function AIAssistant() {
   }
 
   return (
-    <div className={cn('fixed z-50', open && maximized ? 'inset-0' : 'bottom-5 right-5')}>
+    <div
+      className={cn(
+        'fixed z-50',
+        open && maximized ? 'inset-0' : 'bottom-4 right-4 md:bottom-5 md:right-5'
+      )}
+    >
       {open ? (
         <div
           className={cn(
-            'mb-4 flex h-[500px] w-[calc(100vw-2.5rem)] flex-col rounded-[1.5rem] border border-orange-100 bg-warm shadow-lift transition-all duration-200 md:w-[380px]',
+            'mb-4 flex h-[min(500px,calc(100dvh-6rem))] w-[calc(100vw-2rem)] flex-col rounded-[1.5rem] border border-orange-100 bg-warm shadow-lift transition-all duration-200 md:h-[500px] md:w-[380px]',
             maximized && 'mb-0 h-screen w-screen rounded-none border-0 md:h-screen md:w-screen'
           )}
         >

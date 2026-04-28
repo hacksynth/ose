@@ -229,7 +229,7 @@ export function ExamAttemptClient({ attempt }: { attempt: Attempt }) {
 
   return (
     <main className="mx-auto mt-6 max-w-7xl space-y-5">
-      <header className="sticky top-24 z-30 rounded-[1.5rem] bg-white/90 p-4 shadow-soft backdrop-blur">
+      <header className="sticky top-20 z-30 rounded-[1.5rem] bg-white/90 p-4 shadow-soft backdrop-blur md:top-24">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h1 className="font-black text-navy">{attempt.exam.title}</h1>
           <div
@@ -268,8 +268,8 @@ export function ExamAttemptClient({ attempt }: { attempt: Attempt }) {
             answeredCount={answeredCount}
           />
         </aside>
-        <Card className="p-7 hover:translate-y-0">
-          <div className="mb-5 flex items-center justify-between gap-3">
+        <Card className="p-5 hover:translate-y-0 sm:p-7">
+          <div className="mb-5 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
             <h2 className="text-2xl font-black text-navy">第 {question.orderNumber} 题</h2>
             <Button
               variant="secondary"
@@ -293,7 +293,7 @@ export function ExamAttemptClient({ attempt }: { attempt: Attempt }) {
               onChange={handleCaseChange}
             />
           )}
-          <div className="mt-8 flex justify-between">
+          <div className="mt-8 grid gap-3 sm:flex sm:justify-between">
             <Button
               variant="secondary"
               disabled={index === 0}
@@ -403,7 +403,7 @@ const ChoiceQuestion = memo(function ChoiceQuestion({ question, selected, onSele
               aria-checked={isSelected}
               onClick={() => onSelect(option.id)}
               className={cn(
-                'rounded-3xl border-2 bg-white p-5 text-left font-bold transition hover:border-primary',
+                'rounded-3xl border-2 bg-white p-4 text-left font-bold transition hover:border-primary sm:p-5',
                 isSelected && 'border-primary bg-primary-soft'
               )}
             >
@@ -442,7 +442,7 @@ const CaseQuestion = memo(function CaseQuestion({ question, value, onChange }: C
       <div className="space-y-4">
         {question.caseScenario?.subQuestions.map((sub) => (
           <div key={sub.id} className="rounded-3xl bg-white p-4 shadow-sm">
-            <div className="mb-2 flex items-baseline gap-2">
+            <div className="mb-2 flex flex-col gap-2 sm:flex-row sm:items-baseline">
               <span className="font-black text-navy">（{sub.subNumber}）</span>
               <MarkdownRenderer
                 content={sub.content}

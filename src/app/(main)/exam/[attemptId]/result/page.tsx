@@ -68,14 +68,14 @@ export default async function ExamResultPage({
     ])
   );
   return (
-    <main className="mx-auto mt-8 max-w-7xl space-y-6">
-      <Card className="bg-white/90 p-8">
+    <main className="mx-auto mt-6 max-w-7xl space-y-6 md:mt-8">
+      <Card className="bg-white/90 p-5 sm:p-8">
         <p className="mb-3 text-sm font-black text-primary">成绩报告</p>
-        <h1 className="text-4xl font-black text-navy">{attempt.exam.title}</h1>
-        <div className="mt-6 grid gap-4 md:grid-cols-4">
+        <h1 className="text-3xl font-black text-navy sm:text-4xl">{attempt.exam.title}</h1>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-3xl bg-softYellow p-6">
             <p className="font-black text-muted">总分</p>
-            <p className="mt-2 text-5xl font-black text-navy">
+            <p className="mt-2 text-4xl font-black text-navy sm:text-5xl">
               {attempt.totalScore ?? 0}
               <span className="text-xl">/{attempt.exam.totalScore}</span>
             </p>
@@ -99,11 +99,11 @@ export default async function ExamResultPage({
             比上次{diff >= 0 ? '提高' : '降低'}了 {Math.abs(diff)} 分
           </p>
         ) : null}
-        <div className="mt-6 flex gap-3">
-          <Button asChild>
+        <div className="mt-6 grid gap-3 sm:flex">
+          <Button asChild className="w-full sm:w-auto">
             <Link href="/wrong-notes">查看错题</Link>
           </Button>
-          <Button asChild variant="secondary">
+          <Button asChild variant="secondary" className="w-full sm:w-auto">
             <Link href="/exam">返回考试列表</Link>
           </Button>
         </div>
@@ -117,7 +117,7 @@ export default async function ExamResultPage({
           const correctOption = q.options.find((o) => o.isCorrect);
           return (
             <details key={examQuestion.id} className="ose-card p-5">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
+              <summary className="flex cursor-pointer list-none items-start justify-between gap-3">
                 <h2 className="font-black text-navy">
                   第 {examQuestion.orderNumber} 题 · {q.content}
                 </h2>

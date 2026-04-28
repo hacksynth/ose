@@ -85,13 +85,13 @@ export default async function HomePage() {
     <main className="ose-page px-4 pb-12 pt-4 md:px-6">
       <DecorativeBackground />
       <div className="relative z-10 mx-auto max-w-7xl space-y-8">
-        <header className="sticky top-4 z-40 flex items-center justify-between rounded-[1.5rem] border border-white/70 bg-white/85 px-4 py-3 shadow-soft backdrop-blur md:px-6">
-          <Link href="/" className="flex items-center gap-3 font-black text-navy">
-            <span className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-white shadow-soft">
+        <header className="sticky top-2 z-40 flex items-center justify-between gap-3 rounded-2xl border border-white/70 bg-white/85 px-3 py-3 shadow-soft backdrop-blur md:top-4 md:rounded-[1.5rem] md:px-6">
+          <Link href="/" className="flex min-w-0 items-center gap-2 font-black text-navy sm:gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary text-white shadow-soft sm:h-11 sm:w-11">
               OSE
             </span>
-            <span className="leading-tight">
-              <span className="block text-2xl tracking-tight">OSE</span>
+            <span className="min-w-0 leading-tight">
+              <span className="block text-xl tracking-tight sm:text-2xl">OSE</span>
               <span className="block text-xs font-extrabold text-muted">软考 AI 备考平台</span>
             </span>
           </Link>
@@ -123,7 +123,7 @@ export default async function HomePage() {
         </header>
 
         <section className="grid gap-6 pt-4 lg:grid-cols-[1.35fr_0.65fr]">
-          <div className="rounded-[2rem] bg-white/90 p-8 shadow-soft backdrop-blur md:p-10">
+          <div className="rounded-[1.5rem] bg-white/90 p-6 shadow-soft backdrop-blur sm:rounded-[2rem] sm:p-8 md:p-10">
             <div className="mb-5 flex flex-wrap gap-2">
               <span className="inline-flex rounded-full bg-primary-soft px-4 py-2 text-sm font-black text-primary">
                 开源项目
@@ -135,10 +135,10 @@ export default async function HomePage() {
                 Web + 桌面端
               </span>
             </div>
-            <h1 className="max-w-4xl text-4xl font-black leading-tight tracking-tight text-navy md:text-6xl">
+            <h1 className="max-w-4xl text-3xl font-black leading-tight tracking-tight text-navy sm:text-4xl md:text-6xl">
               像专业学习工作台一样备考软考。
             </h1>
-            <p className="mt-5 max-w-2xl text-lg font-semibold leading-8 text-muted">
+            <p className="mt-5 max-w-2xl text-base font-semibold leading-8 text-muted sm:text-lg">
               OSE 面向软件设计师考试，把题库练习、案例分析、模拟考试、错题复盘、学情诊断和 AI
               辅助整合到一个开源、可自部署的备考平台中。
             </p>
@@ -153,10 +153,10 @@ export default async function HomePage() {
             </div>
           </div>
 
-          <Card className="flex flex-col justify-between bg-navy p-8 text-white hover:translate-y-0">
+          <Card className="flex flex-col justify-between bg-navy p-6 text-white hover:translate-y-0 sm:p-8">
             <div>
               <p className="text-sm font-black text-white/60">平台预览</p>
-              <h2 className="mt-3 text-5xl font-black">
+              <h2 className="mt-3 text-4xl font-black sm:text-5xl">
                 78<span className="ml-1 text-xl">%</span>
               </h2>
               <p className="mt-2 font-bold text-white/70">预计通过概率</p>
@@ -204,7 +204,7 @@ export default async function HomePage() {
                     <Icon className="h-5 w-5 text-navy" aria-hidden="true" />
                   </span>
                 </div>
-                <p className="mt-6 text-5xl font-black text-navy">
+                <p className="mt-6 text-4xl font-black text-navy sm:text-5xl">
                   {stat.value}
                   <span className="ml-1 text-xl">{stat.unit}</span>
                 </p>
@@ -267,7 +267,7 @@ export default async function HomePage() {
           </Card>
         </section>
 
-        <section className="rounded-[2rem] bg-white/90 p-8 shadow-soft backdrop-blur md:p-10">
+        <section className="rounded-[1.5rem] bg-white/90 p-6 shadow-soft backdrop-blur sm:rounded-[2rem] sm:p-8 md:p-10">
           <div className="grid gap-8 md:grid-cols-[1fr_auto] md:items-center">
             <div>
               <p className="inline-flex rounded-full bg-primary-soft px-4 py-2 text-sm font-black text-primary">

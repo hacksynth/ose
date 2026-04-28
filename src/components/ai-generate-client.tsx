@@ -136,12 +136,12 @@ export function AIGenerateClient({
   }
 
   return (
-    <main className="mx-auto mt-8 max-w-7xl space-y-8">
-      <section className="rounded-[2rem] bg-gradient-to-br from-softYellow via-white to-softRose p-8 shadow-soft">
+    <main className="mx-auto mt-6 max-w-7xl space-y-6 md:mt-8 md:space-y-8">
+      <section className="rounded-[1.5rem] bg-gradient-to-br from-softYellow via-white to-softRose p-6 shadow-soft sm:rounded-[2rem] sm:p-8">
         <div className="flex flex-wrap items-center justify-between gap-5">
           <div>
             <p className="mb-3 text-sm font-black text-primary">AI Question Studio</p>
-            <h1 className="text-4xl font-black text-navy md:text-5xl">AI 智能出题</h1>
+            <h1 className="text-3xl font-black text-navy sm:text-4xl md:text-5xl">AI 智能出题</h1>
             <p className="mt-3 font-semibold text-muted">
               按知识点定制选择题，或让 AI 生成下午案例分析题。
             </p>
@@ -150,8 +150,8 @@ export function AIGenerateClient({
         </div>
       </section>
 
-      <Card className="p-7 hover:translate-y-0">
-        <div className="mb-6 flex flex-wrap gap-3">
+      <Card className="p-5 hover:translate-y-0 sm:p-7">
+        <div className="mb-6 grid gap-3 sm:flex sm:flex-wrap">
           <Button
             type="button"
             variant={tab === 'choice' ? 'default' : 'secondary'}
@@ -253,7 +253,7 @@ export function AIGenerateClient({
           <Button
             type="button"
             size="lg"
-            className="mt-7"
+            className="mt-7 w-full sm:w-auto"
             onClick={generate}
             disabled={!aiStatus.configured}
             title={!aiStatus.configured ? 'AI 未配置，请先在个人中心填入 API Key' : undefined}
@@ -270,13 +270,13 @@ export function AIGenerateClient({
       </Card>
 
       <section className="space-y-4">
-        <h2 className="text-3xl font-black text-navy">出题历史</h2>
+        <h2 className="text-2xl font-black text-navy sm:text-3xl">出题历史</h2>
         {history.length ? (
           <div className="grid gap-4 md:grid-cols-2">
             {history.map((item) => (
               <Card key={item.id} className="p-5 hover:translate-y-0">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
                     <p className="font-black text-navy">
                       {item.type === 'CASE_ANALYSIS' ? '案例分析题' : '选择题'} ·{' '}
                       {item.knowledgePointNames}
@@ -289,7 +289,12 @@ export function AIGenerateClient({
                       · 难度 {item.difficulty} · {item.count} 题
                     </p>
                   </div>
-                  <Button type="button" variant="secondary" onClick={() => rerun(item)}>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => rerun(item)}
+                    className="w-full sm:w-auto"
+                  >
                     再来一组
                   </Button>
                 </div>

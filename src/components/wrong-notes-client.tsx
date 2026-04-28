@@ -215,15 +215,15 @@ export function WrongNotesClient() {
   );
 
   return (
-    <main className="mx-auto mt-8 max-w-7xl space-y-6">
-      <section className="rounded-[2rem] bg-white/90 p-8 shadow-soft">
+    <main className="mx-auto mt-6 max-w-7xl space-y-6 md:mt-8">
+      <section className="rounded-[1.5rem] bg-white/90 p-6 shadow-soft sm:rounded-[2rem] sm:p-8">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
             <p className="mb-3 text-sm font-black text-primary">Wrong Notes</p>
-            <h1 className="text-4xl font-black text-navy md:text-5xl">错题本</h1>
+            <h1 className="text-3xl font-black text-navy sm:text-4xl md:text-5xl">错题本</h1>
             <p className="mt-3 font-semibold text-muted">把每一次错误变成下一次得分。</p>
           </div>
-          <Button onClick={retryAll}>
+          <Button onClick={retryAll} className="w-full sm:w-auto">
             <RefreshCw className="h-4 w-4" />
             错题重练
           </Button>
@@ -233,15 +233,19 @@ export function WrongNotesClient() {
       <section className="grid gap-4 md:grid-cols-3">
         <Card className="bg-softYellow p-6">
           <p className="font-black text-muted">总错题数</p>
-          <p className="mt-3 text-5xl font-black text-navy">{data?.stats.total ?? 0}</p>
+          <p className="mt-3 text-4xl font-black text-navy sm:text-5xl">{data?.stats.total ?? 0}</p>
         </Card>
         <Card className="bg-softRose p-6">
           <p className="font-black text-muted">未掌握</p>
-          <p className="mt-3 text-5xl font-black text-navy">{data?.stats.unmastered ?? 0}</p>
+          <p className="mt-3 text-4xl font-black text-navy sm:text-5xl">
+            {data?.stats.unmastered ?? 0}
+          </p>
         </Card>
         <Card className="bg-softGreen p-6">
           <p className="font-black text-muted">已掌握</p>
-          <p className="mt-3 text-5xl font-black text-navy">{data?.stats.mastered ?? 0}</p>
+          <p className="mt-3 text-4xl font-black text-navy sm:text-5xl">
+            {data?.stats.mastered ?? 0}
+          </p>
         </Card>
       </section>
 
@@ -394,7 +398,7 @@ const WrongNoteRow = memo(function WrongNoteRow({ item, onToggle, onDelete }: Ro
             做错 {item.wrongCount} 次 · 最近做错 {formatTime(item.lastWrongAt)}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="grid gap-2 sm:flex sm:flex-wrap">
           <Button
             variant="secondary"
             onClick={() => setOpen((value) => !value)}
@@ -476,7 +480,7 @@ const WrongNoteRow = memo(function WrongNoteRow({ item, onToggle, onDelete }: Ro
               ) : null}
             </div>
           ) : null}
-          <div className="mt-5 flex gap-3">
+          <div className="mt-5 grid gap-3 sm:flex">
             {retrying ? (
               <Button onClick={submitRetry} disabled={!selected || submitting}>
                 {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}提交重练

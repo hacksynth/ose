@@ -234,34 +234,34 @@ export default async function DashboardPage() {
   ).slice(0, 4);
 
   return (
-    <main className="mx-auto mt-8 max-w-7xl space-y-8">
+    <main className="mx-auto mt-6 max-w-7xl space-y-6 md:mt-8 md:space-y-8">
       <section className="grid gap-6 lg:grid-cols-[1.35fr_0.65fr]">
-        <div className="rounded-[2rem] bg-white/90 p-8 shadow-soft backdrop-blur md:p-10">
+        <div className="rounded-[1.5rem] bg-white/90 p-6 shadow-soft backdrop-blur sm:rounded-[2rem] sm:p-8 md:p-10">
           <p className="mb-4 inline-flex rounded-full bg-primary-soft px-4 py-2 text-sm font-black text-primary">
             今天也很适合进步一点点
           </p>
-          <h1 className="text-4xl font-black leading-tight tracking-tight text-navy md:text-6xl">
+          <h1 className="text-3xl font-black leading-tight tracking-tight text-navy sm:text-4xl md:text-6xl">
             欢迎回来，{session.user.name || '学习伙伴'}
           </h1>
-          <p className="mt-5 max-w-2xl text-lg font-semibold text-muted">
+          <p className="mt-5 max-w-2xl text-base font-semibold text-muted sm:text-lg">
             {formatChinaDate(new Date())} ·{' '}
             {exam.custom ? '你的目标考试时间是' : '最近一次软考约在'} {formatChinaDate(exam.date)}
             ，还有 <span className="font-black text-primary">{exam.days}</span> 天
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <Button asChild size="lg">
+            <Button asChild size="lg" className="w-full sm:w-auto">
               <Link href="/practice">
                 <BookOpenCheck className="h-5 w-5" />
                 开始练习
               </Link>
             </Button>
-            <Button asChild variant="secondary" size="lg">
+            <Button asChild variant="secondary" size="lg" className="w-full sm:w-auto">
               <Link href="/wrong-notes">
                 <NotebookPen className="h-5 w-5" />
                 查看错题（{unmasteredWrong}）
               </Link>
             </Button>
-            <Button asChild variant="secondary" size="lg">
+            <Button asChild variant="secondary" size="lg" className="w-full sm:w-auto">
               <Link href="/profile">
                 <UserRound className="h-5 w-5" />
                 个人中心
@@ -269,10 +269,10 @@ export default async function DashboardPage() {
             </Button>
           </div>
         </div>
-        <Card className="flex flex-col justify-between bg-navy p-8 text-white hover:translate-y-0">
+        <Card className="flex flex-col justify-between bg-navy p-6 text-white hover:translate-y-0 sm:p-8">
           <div>
             <p className="text-sm font-black text-white/60">考试倒计时</p>
-            <h2 className="mt-3 text-5xl font-black">
+            <h2 className="mt-3 text-4xl font-black sm:text-5xl">
               {exam.days}
               <span className="ml-2 text-xl">天</span>
             </h2>
@@ -295,7 +295,7 @@ export default async function DashboardPage() {
                   <Icon className="h-5 w-5 text-navy" />
                 </span>
               </div>
-              <p className="mt-6 text-5xl font-black text-navy">
+              <p className="mt-6 text-4xl font-black text-navy sm:text-5xl">
                 {stat.value}
                 <span className="ml-1 text-xl">{stat.unit}</span>
               </p>
@@ -321,7 +321,7 @@ export default async function DashboardPage() {
 
       <Card className="bg-white/90 p-7 hover:translate-y-0">
         <h2 className="text-2xl font-black text-navy">综合掌握度</h2>
-        <p className="mt-4 text-5xl font-black text-primary">{accuracy}%</p>
+        <p className="mt-4 text-4xl font-black text-primary sm:text-5xl">{accuracy}%</p>
         <Button asChild variant="secondary" className="mt-5">
           <Link href="/analysis">
             <Brain className="h-4 w-4" />
@@ -334,7 +334,7 @@ export default async function DashboardPage() {
         <Card className="bg-white/90 p-7 hover:translate-y-0">
           <h2 className="text-2xl font-black text-navy">最近考试成绩</h2>
           <p className="mt-3 font-semibold text-muted">{recentExam.exam.title}</p>
-          <p className="mt-4 text-5xl font-black text-primary">
+          <p className="mt-4 text-4xl font-black text-primary sm:text-5xl">
             {recentExam.totalScore}
             <span className="text-xl text-muted">/{recentExam.exam.totalScore}</span>
           </p>
@@ -352,7 +352,7 @@ export default async function DashboardPage() {
               {recentAnswers.map((answer) => (
                 <div
                   key={answer.id}
-                  className="flex items-center justify-between rounded-2xl bg-warm p-3"
+                  className="flex items-start justify-between gap-3 rounded-2xl bg-warm p-3"
                 >
                   <div>
                     <p className="font-black text-navy">

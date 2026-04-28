@@ -18,8 +18,15 @@ html {
   scroll-behavior: smooth;
 }
 body {
-  @apply min-h-screen bg-warm text-navy antialiased;
+  @apply min-h-screen overflow-x-hidden bg-warm text-navy antialiased;
   font-family: var(--font-body), ui-sans-serif, system-ui, sans-serif;
+}
+
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
 }
 
 @layer components {
@@ -59,6 +66,41 @@ body {
 
   .ose-date-field input {
     @apply h-full min-w-0 flex-1 bg-transparent text-sm font-extrabold outline-none;
+  }
+}
+
+@media (max-width: 640px) {
+  .ose-page {
+    padding: 0.75rem max(0.75rem, env(safe-area-inset-right)) max(5rem, env(safe-area-inset-bottom))
+      max(0.75rem, env(safe-area-inset-left));
+  }
+
+  .ose-page main {
+    margin-top: 1rem;
+  }
+
+  .ose-page h1 {
+    font-size: clamp(1.875rem, 9vw, 2.5rem);
+    line-height: 1.12;
+    overflow-wrap: anywhere;
+  }
+
+  .ose-page h2,
+  .ose-page h3,
+  .ose-page p,
+  .ose-page li,
+  .ose-page a,
+  .ose-page button,
+  .ose-page span {
+    overflow-wrap: anywhere;
+  }
+
+  .ose-card {
+    border-radius: 1rem;
+  }
+
+  .ose-card:hover {
+    transform: none;
   }
 }
 

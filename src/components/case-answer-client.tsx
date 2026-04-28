@@ -99,14 +99,14 @@ export function CaseAnswerClient({ question }: { question: CaseQuestion }) {
   }
 
   return (
-    <main className="mx-auto mt-8 max-w-7xl">
+    <main className="mx-auto mt-6 max-w-7xl md:mt-8">
       <div className="space-y-6">
-        <Card className="p-7 hover:translate-y-0">
+        <Card className="p-5 hover:translate-y-0 sm:p-7">
           <p className="mb-3 text-sm font-black text-primary">
             案例背景 · {question.knowledgePoint.parent?.name ?? question.knowledgePoint.name} /{' '}
             {question.knowledgePoint.name}
           </p>
-          <h1 className="text-3xl font-black text-navy">{question.content}</h1>
+          <h1 className="text-2xl font-black text-navy sm:text-3xl">{question.content}</h1>
           <MarkdownRenderer
             content={question.caseScenario.background}
             className="mt-6 text-base font-semibold leading-8 text-muted [&_img]:mx-auto [&_img]:my-3 [&_img]:rounded-2xl"
@@ -117,8 +117,8 @@ export function CaseAnswerClient({ question }: { question: CaseQuestion }) {
           {question.caseScenario.subQuestions.map((sub) => {
             const result = results?.find((item) => item.caseSubQuestionId === sub.id);
             return (
-              <Card key={sub.id} className="p-6 hover:translate-y-0">
-                <div className="mb-4 flex items-center justify-between gap-3">
+              <Card key={sub.id} className="p-5 hover:translate-y-0 sm:p-6">
+                <div className="mb-4 flex items-start justify-between gap-3">
                   <h2 className="text-xl font-black text-navy">第 {sub.subNumber} 题</h2>
                   <span className="rounded-full bg-softYellow px-3 py-1 text-sm font-black text-navy">
                     {sub.score} 分
@@ -159,9 +159,9 @@ export function CaseAnswerClient({ question }: { question: CaseQuestion }) {
           ) : null}
           {results ? (
             <>
-              <Card className="bg-navy p-7 text-white hover:translate-y-0">
+              <Card className="bg-navy p-5 text-white hover:translate-y-0 sm:p-7">
                 <p className="text-sm font-black text-white/60">总得分</p>
-                <p className="mt-2 text-5xl font-black">
+                <p className="mt-2 text-4xl font-black sm:text-5xl">
                   {totalScore}
                   <span className="text-xl">/{maxScore} 分</span>
                 </p>

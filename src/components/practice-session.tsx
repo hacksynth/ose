@@ -174,7 +174,7 @@ export function PracticeSession() {
 
   if (!question && !summary) {
     return (
-      <Card className="mx-auto mt-8 max-w-3xl p-8 text-center font-bold text-muted">
+      <Card className="mx-auto mt-6 max-w-3xl p-6 text-center font-bold text-muted sm:p-8">
         正在载入练习...
       </Card>
     );
@@ -182,15 +182,15 @@ export function PracticeSession() {
 
   if (summary) {
     return (
-      <main className="mx-auto mt-8 max-w-5xl">
-        <Card className="p-8 md:p-10">
+      <main className="mx-auto mt-6 max-w-5xl md:mt-8">
+        <Card className="p-5 sm:p-8 md:p-10">
           <p className="text-sm font-black text-primary">
             {summary.mode === 'wrong-note-retry' ? '错题重练完成' : '练习完成'}
           </p>
-          <h1 className="mt-3 text-4xl font-black text-navy">
+          <h1 className="mt-3 text-3xl font-black text-navy sm:text-4xl">
             {summary.mode === 'wrong-note-retry' ? '掌握改进统计' : '本次练习总结'}
           </h1>
-          <div className="mt-8 grid gap-4 md:grid-cols-4">
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-3xl bg-softYellow p-6">
               <p className="font-black text-muted">总题数</p>
               <p className="mt-3 text-4xl font-black">{summary.total}</p>
@@ -225,14 +225,14 @@ export function PracticeSession() {
               <p className="mt-3 font-semibold text-muted">本次没有错题，保持状态！</p>
             )}
           </div>
-          <div className="mt-8 flex gap-3">
-            <Button asChild>
+          <div className="mt-8 grid gap-3 sm:flex">
+            <Button asChild className="w-full sm:w-auto">
               <Link href="/practice">
                 <Home className="h-4 w-4" />
                 返回练习
               </Link>
             </Button>
-            <Button asChild variant="secondary">
+            <Button asChild variant="secondary" className="w-full sm:w-auto">
               <Link href="/dashboard">回到仪表盘</Link>
             </Button>
           </div>
@@ -242,7 +242,7 @@ export function PracticeSession() {
   }
 
   return (
-    <main className="mx-auto mt-8 max-w-5xl space-y-6">
+    <main className="mx-auto mt-6 max-w-5xl space-y-5 md:mt-8 md:space-y-6">
       <Card className="p-5 md:p-6">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
           <span className="font-black text-navy">
@@ -265,13 +265,13 @@ export function PracticeSession() {
         </div>
       </Card>
 
-      <Card className="p-7 md:p-10">
+      <Card className="p-5 sm:p-7 md:p-10">
         <p className="mb-4 text-sm font-black text-muted">
           2023 上午 · 第 {question.questionNumber} 题 · 难度 {question.difficulty}
         </p>
         <MarkdownRenderer
           content={question.content}
-          className="text-2xl font-black leading-relaxed text-navy md:text-3xl [&_img]:my-3 [&_img]:rounded-2xl"
+          className="text-xl font-black leading-relaxed text-navy md:text-3xl [&_img]:my-3 [&_img]:rounded-2xl"
         />
         <div className="mt-8 grid gap-4">
           {question.options.map((option) => {
@@ -286,7 +286,7 @@ export function PracticeSession() {
                 disabled={Boolean(result)}
                 onClick={() => setSelectedOptionId(option.id)}
                 className={cn(
-                  'flex w-full cursor-pointer items-start gap-4 rounded-3xl border-2 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft',
+                  'flex w-full cursor-pointer items-start gap-3 rounded-3xl border-2 bg-white p-4 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft sm:gap-4 sm:p-5',
                   isSelected && !result && 'border-primary bg-primary-soft',
                   isCorrect && result && 'border-green-300 bg-green-50',
                   isWrongSelected && 'border-red-300 bg-red-50'
@@ -323,17 +323,26 @@ export function PracticeSession() {
           </div>
         ) : null}
 
-        <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
-          <Button variant="secondary" onClick={previousQuestion} disabled={index === 0}>
+        <div className="mt-8 grid gap-3 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
+          <Button
+            variant="secondary"
+            onClick={previousQuestion}
+            disabled={index === 0}
+            className="w-full sm:w-auto"
+          >
             <ArrowLeft className="h-4 w-4" />
             上一题
           </Button>
           {!result ? (
-            <Button onClick={submitAnswer} disabled={!selectedOptionId || submitting}>
+            <Button
+              onClick={submitAnswer}
+              disabled={!selectedOptionId || submitting}
+              className="w-full sm:w-auto"
+            >
               {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}确认作答
             </Button>
           ) : (
-            <Button onClick={nextQuestion}>
+            <Button onClick={nextQuestion} className="w-full sm:w-auto">
               {index === questions.length - 1 ? '查看总结' : '下一题'}
               <ArrowRight className="h-4 w-4" />
             </Button>
