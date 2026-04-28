@@ -37,6 +37,7 @@ fn restart_server(app: AppHandle) -> Result<u16, String> {
     start_next_server(&app)
 }
 
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
