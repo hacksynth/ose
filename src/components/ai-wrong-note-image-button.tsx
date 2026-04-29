@@ -15,18 +15,19 @@ type Generation = {
   id: string;
   status: GenerationStatus;
   imageUrl: string | null;
-  createdAt: string;
-  provider: string;
-  model: string;
-  imageSize: string;
-  imageQuality: string;
-  imageOutputFormat: string;
-  imageStyle: string;
+  createdAt?: string;
+  provider?: string;
+  model?: string;
+  imageSize?: string;
+  imageQuality?: string;
+  imageOutputFormat?: string;
+  imageStyle?: string;
   errorMessage: string | null;
 };
 
 type AIWrongNoteImageButtonProps = {
   wrongNoteId: string;
+  initialGeneration?: Generation | null;
   onGenerationChange?: (generation: Generation | null) => void;
 };
 
@@ -44,14 +45,23 @@ function statusLabel(status: GenerationStatus | undefined) {
 
 export function AIWrongNoteImageButton({
   wrongNoteId,
+  initialGeneration,
   onGenerationChange,
 }: AIWrongNoteImageButtonProps) {
   const [configured, setConfigured] = useState(true);
   const [message, setMessage] = useState('');
-  const [generation, setGeneration] = useState<Generation | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [generation, setGeneration] = useState<Generation | null>(initialGeneration ?? null);
+  const [loading, setLoading] = useState(!initialGeneration);
   const [submitting, setSubmitting] = useState(false);
   const controllerRef = useRef<AbortController | null>(null);
+  const hasInitialGenerationRef = useRef(Boolean(initialGeneration));
+  const initialGenerationKey = initialGeneration
+    ? `${initialGeneration.id}:${initialGeneration.status}:${initialGeneration.imageUrl ?? ''}`
+    : '';
+
+  useEffect(() => {
+    if (initialGeneration) setGeneration(initialGeneration);
+  }, [initialGeneration, initialGenerationKey]);
 
   const load = useCallback(
     async (options?: { silent?: boolean }) => {
@@ -75,8 +85,12 @@ export function AIWrongNoteImageButton({
         setMessage((data as { message?: string }).message || '');
         const nextGeneration = ((data as { generation?: Generation | null }).generation ??
           null) as Generation | null;
-        setGeneration(nextGeneration);
-        onGenerationChange?.(nextGeneration);
+        setGeneration((current) => {
+          if (nextGeneration) return nextGeneration;
+          if (current?.status === 'COMPLETED' && current.imageUrl) return current;
+          return null;
+        });
+        if (nextGeneration) onGenerationChange?.(nextGeneration);
       } catch (error) {
         if ((error as { name?: string })?.name === 'AbortError') return;
         setMessage('讲解图状态加载失败');
@@ -89,7 +103,7 @@ export function AIWrongNoteImageButton({
   );
 
   useEffect(() => {
-    load();
+    load({ silent: hasInitialGenerationRef.current });
     return () => controllerRef.current?.abort();
   }, [load]);
 
@@ -144,7 +158,18 @@ export function AIWrongNoteImageButton({
   const completed = Boolean(completedGeneration);
   const disabled = loading || submitting || active || !configured;
   const statusMessage =
-    generation?.status === 'FAILED' ? generation.errorMessage || '讲解图生成失败，请重试' : message;
+    generation?.status === 'FAILED'
+      ? generation.errorMessage || '讲解图生成失败，请重试'
+      : completed
+        ? ''
+        : message;
+  const completedMeta = [
+    [completedGeneration?.provider, completedGeneration?.model].filter(Boolean).join(' / '),
+    completedGeneration?.imageSize,
+    completedGeneration?.imageQuality,
+  ]
+    .filter(Boolean)
+    .join(' · ');
   const [imageWidth, imageHeight] = (generation?.imageSize ?? '1024x1536')
     .split('x')
     .map((value) => Number.parseInt(value, 10) || 1024);
@@ -221,10 +246,9 @@ export function AIWrongNoteImageButton({
             unoptimized
             className="w-full rounded-2xl border border-orange-100 bg-white"
           />
-          <p className="mt-3 text-xs font-bold text-muted">
-            {completedGeneration?.provider} / {completedGeneration?.model} ·{' '}
-            {completedGeneration?.imageSize} · {completedGeneration?.imageQuality}
-          </p>
+          {completedMeta ? (
+            <p className="mt-3 text-xs font-bold text-muted">{completedMeta}</p>
+          ) : null}
         </Card>
       ) : null}
     </div>

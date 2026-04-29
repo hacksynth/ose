@@ -2,6 +2,7 @@
 
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import {
   CheckCircle2,
   ChevronDown,
@@ -487,6 +488,8 @@ const WrongNoteRow = memo(function WrongNoteRow({
     item.question.content.length > WRONG_NOTE_PREVIEW_LENGTH
       ? `${item.question.content.slice(0, WRONG_NOTE_PREVIEW_LENGTH)}...`
       : item.question.content;
+  const completedImageUrl =
+    item.imageGeneration?.status === 'COMPLETED' ? item.imageGeneration.imageUrl : null;
   const handleImageGenerationChange = useCallback(
     (generation: WrongNoteImageGeneration | null) => {
       onImageGenerationChange(item.id, generation);
@@ -552,6 +555,26 @@ const WrongNoteRow = memo(function WrongNoteRow({
             做错 {item.wrongCount} 次 · 最近做错 {formatTime(item.lastWrongAt)}
           </p>
         </div>
+        {completedImageUrl ? (
+          <button
+            type="button"
+            onClick={() => setOpen(true)}
+            className="relative h-36 w-full shrink-0 overflow-hidden rounded-2xl border border-orange-100 bg-white shadow-soft transition hover:scale-[1.01] sm:h-28 sm:w-24 md:w-28"
+            aria-label="查看错题讲解图"
+          >
+            <Image
+              src={completedImageUrl}
+              alt="错题讲解图缩略图"
+              fill
+              unoptimized
+              sizes="(max-width: 640px) 100vw, 112px"
+              className="object-cover object-top"
+            />
+            <span className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2 py-1 text-[11px] font-black text-navy shadow-soft">
+              讲解图
+            </span>
+          </button>
+        ) : null}
         <div className="grid gap-2 sm:flex sm:flex-wrap">
           <Button
             variant="secondary"
@@ -617,6 +640,7 @@ const WrongNoteRow = memo(function WrongNoteRow({
               />
               <AIWrongNoteImageButton
                 wrongNoteId={item.id}
+                initialGeneration={item.imageGeneration}
                 onGenerationChange={handleImageGenerationChange}
               />
             </div>
