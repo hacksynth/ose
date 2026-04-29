@@ -77,21 +77,24 @@ model User {
 }
 
 model UserAISettings {
-  userId            String   @id
-  provider          String?
-  model             String?
-  apiKey            String?
-  baseUrl           String?
-  imageProvider     String?
-  imageModel        String?
-  imageApiKey       String?
-  imageBaseUrl      String?
-  imageSize         String?
-  imageQuality      String?
-  imageOutputFormat String?
-  imageStyle        String?
-  updatedAt         DateTime @updatedAt
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId                  String   @id
+  provider                String?
+  model                   String?
+  apiKey                  String?
+  baseUrl                 String?
+  imageProvider           String?
+  imageModel              String?
+  imageApiKey             String?
+  imageBaseUrl            String?
+  imageSize               String?
+  imageQuality            String?
+  imageOutputFormat       String?
+  imageStyle              String?
+  imageRateLimitPerMinute Int?
+  imageRateLimitHourly    Int?
+  imageRateLimitDaily     Int?
+  updatedAt               DateTime @updatedAt
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model PasswordResetToken {

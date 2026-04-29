@@ -1,4 +1,7 @@
+import { prisma } from '@/lib/prisma';
+
 type WindowState = {
+  key: 'perMinute' | 'hourly' | 'daily';
   windowMs: number;
   maxCalls: number;
   calls: Map<string, number[]>;
@@ -9,25 +12,36 @@ const HOUR_WINDOW_MS = 60 * 60_000;
 const DAY_WINDOW_MS = 24 * 60 * 60_000;
 const CLEANUP_INTERVAL_MS = 5 * 60_000;
 
+export const DEFAULT_AI_IMAGE_RATE_LIMIT_PER_MINUTE = envInt('AI_IMAGE_RATE_LIMIT_PER_MINUTE', 10);
+export const DEFAULT_AI_IMAGE_RATE_LIMIT_HOURLY = envInt('AI_IMAGE_RATE_LIMIT_HOURLY', 60);
+export const DEFAULT_AI_IMAGE_RATE_LIMIT_DAILY = envInt('AI_IMAGE_RATE_LIMIT_DAILY', 300);
+
 const windows: WindowState[] = [
   {
+    key: 'perMinute',
     windowMs: MINUTE_WINDOW_MS,
-    maxCalls: envInt('AI_IMAGE_RATE_LIMIT_PER_MINUTE', 3),
+    maxCalls: DEFAULT_AI_IMAGE_RATE_LIMIT_PER_MINUTE,
     calls: new Map(),
   },
   {
+    key: 'hourly',
     windowMs: HOUR_WINDOW_MS,
-    maxCalls: envInt('AI_IMAGE_RATE_LIMIT_HOURLY', 10),
+    maxCalls: DEFAULT_AI_IMAGE_RATE_LIMIT_HOURLY,
     calls: new Map(),
   },
-  { windowMs: DAY_WINDOW_MS, maxCalls: envInt('AI_IMAGE_RATE_LIMIT_DAILY', 30), calls: new Map() },
+  {
+    key: 'daily',
+    windowMs: DAY_WINDOW_MS,
+    maxCalls: DEFAULT_AI_IMAGE_RATE_LIMIT_DAILY,
+    calls: new Map(),
+  },
 ];
 
 let lastCleanup = 0;
 
 function envInt(name: string, fallback: number) {
   const value = Number.parseInt(process.env[name] ?? '', 10);
-  return Number.isFinite(value) && value > 0 ? value : fallback;
+  return Number.isFinite(value) && value >= 0 ? value : fallback;
 }
 
 function cleanup(now: number) {
@@ -43,17 +57,34 @@ function cleanup(now: number) {
   }
 }
 
-export function checkAIImageRateLimit(userId: string) {
+async function userLimits(userId: string) {
+  const settings = await prisma.userAISettings.findUnique({
+    where: { userId },
+    select: {
+      imageRateLimitPerMinute: true,
+      imageRateLimitHourly: true,
+      imageRateLimitDaily: true,
+    },
+  });
+  return {
+    perMinute: settings?.imageRateLimitPerMinute ?? DEFAULT_AI_IMAGE_RATE_LIMIT_PER_MINUTE,
+    hourly: settings?.imageRateLimitHourly ?? DEFAULT_AI_IMAGE_RATE_LIMIT_HOURLY,
+    daily: settings?.imageRateLimitDaily ?? DEFAULT_AI_IMAGE_RATE_LIMIT_DAILY,
+  };
+}
+
+export async function checkAIImageRateLimit(userId: string) {
   const now = Date.now();
   cleanup(now);
+  const limits = await userLimits(userId);
 
   const recentByWindow = windows.map((window) => {
     const cutoff = now - window.windowMs;
     const recent = (window.calls.get(userId) ?? []).filter((time) => time > cutoff);
-    return { window, recent };
+    return { window, maxCalls: limits[window.key], recent };
   });
 
-  if (recentByWindow.some(({ window, recent }) => recent.length >= window.maxCalls)) {
+  if (recentByWindow.some(({ maxCalls, recent }) => maxCalls > 0 && recent.length >= maxCalls)) {
     for (const { window, recent } of recentByWindow) window.calls.set(userId, recent);
     return false;
   }

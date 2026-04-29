@@ -32,6 +32,9 @@ type Settings = {
   imageQuality: string | null;
   imageOutputFormat: string | null;
   imageStyle: string | null;
+  imageRateLimitPerMinute: number | null;
+  imageRateLimitHourly: number | null;
+  imageRateLimitDaily: number | null;
 };
 
 type TestResult = {
@@ -56,7 +59,14 @@ const DEFAULT_SETTINGS: Settings = {
   imageQuality: null,
   imageOutputFormat: null,
   imageStyle: null,
+  imageRateLimitPerMinute: null,
+  imageRateLimitHourly: null,
+  imageRateLimitDaily: null,
 };
+
+const DEFAULT_IMAGE_RATE_LIMIT_PER_MINUTE = 10;
+const DEFAULT_IMAGE_RATE_LIMIT_HOURLY = 60;
+const DEFAULT_IMAGE_RATE_LIMIT_DAILY = 300;
 
 const PROVIDERS = [
   { value: '', label: '使用服务器环境变量' },
@@ -107,6 +117,10 @@ export function AISettingsCard() {
       imageQuality: settings.imageQuality || 'medium',
       imageOutputFormat: settings.imageOutputFormat || 'webp',
       imageStyle: settings.imageStyle || 'clean_education_card',
+      imageRateLimitPerMinute:
+        settings.imageRateLimitPerMinute ?? DEFAULT_IMAGE_RATE_LIMIT_PER_MINUTE,
+      imageRateLimitHourly: settings.imageRateLimitHourly ?? DEFAULT_IMAGE_RATE_LIMIT_HOURLY,
+      imageRateLimitDaily: settings.imageRateLimitDaily ?? DEFAULT_IMAGE_RATE_LIMIT_DAILY,
     };
     if (apiKeyDraft.trim()) payload.apiKey = apiKeyDraft.trim();
     if (imageApiKeyDraft.trim()) payload.imageApiKey = imageApiKeyDraft.trim();
@@ -120,6 +134,9 @@ export function AISettingsCard() {
     settings.imageOutputFormat,
     settings.imageProvider,
     settings.imageQuality,
+    settings.imageRateLimitDaily,
+    settings.imageRateLimitHourly,
+    settings.imageRateLimitPerMinute,
     settings.imageSize,
     settings.imageStyle,
     settings.model,
@@ -634,6 +651,60 @@ export function AISettingsCard() {
                 className="block aspect-[2/3] w-full object-cover object-top"
               />
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="ai-image-rate-minute">每分钟生图上限</Label>
+            <Input
+              id="ai-image-rate-minute"
+              value={settings.imageRateLimitPerMinute ?? DEFAULT_IMAGE_RATE_LIMIT_PER_MINUTE}
+              onChange={(event) =>
+                setSettings((prev) => ({
+                  ...prev,
+                  imageRateLimitPerMinute: Number.parseInt(event.target.value || '0', 10),
+                }))
+              }
+              disabled={busy}
+              type="number"
+              min={0}
+              max={1000}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="ai-image-rate-hour">每小时生图上限</Label>
+            <Input
+              id="ai-image-rate-hour"
+              value={settings.imageRateLimitHourly ?? DEFAULT_IMAGE_RATE_LIMIT_HOURLY}
+              onChange={(event) =>
+                setSettings((prev) => ({
+                  ...prev,
+                  imageRateLimitHourly: Number.parseInt(event.target.value || '0', 10),
+                }))
+              }
+              disabled={busy}
+              type="number"
+              min={0}
+              max={10000}
+            />
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <Label htmlFor="ai-image-rate-day">每日生图上限</Label>
+            <Input
+              id="ai-image-rate-day"
+              value={settings.imageRateLimitDaily ?? DEFAULT_IMAGE_RATE_LIMIT_DAILY}
+              onChange={(event) =>
+                setSettings((prev) => ({
+                  ...prev,
+                  imageRateLimitDaily: Number.parseInt(event.target.value || '0', 10),
+                }))
+              }
+              disabled={busy}
+              type="number"
+              min={0}
+              max={100000}
+            />
+            <p className="text-xs font-bold text-muted">
+              设为 0 表示不限制。批量生成讲解图时建议适当调高，实际并发仍由后台队列控制。
+            </p>
           </div>
         </div>
 

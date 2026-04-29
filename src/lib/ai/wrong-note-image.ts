@@ -256,7 +256,7 @@ export async function prepareWrongNoteImageGeneration(params: {
 
   if (!checkAIRateLimit(params.userId))
     throw Object.assign(new Error('AI 调用太频繁啦，请稍后再试'), { status: 429 });
-  if (!checkAIImageRateLimit(params.userId))
+  if (!(await checkAIImageRateLimit(params.userId)))
     throw Object.assign(new Error('生图调用太频繁啦，请稍后再试'), { status: 429 });
 
   const generation = await prisma.aIImageGeneration.create({
