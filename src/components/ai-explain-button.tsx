@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { Lightbulb, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -61,18 +62,32 @@ export function AIExplainButton({
 
   return (
     <div className="mt-5">
-      <Button
-        type="button"
-        variant="secondary"
-        onClick={explain}
-        disabled={!status.configured || loading}
-        title={
-          !status.configured ? '请在环境变量中配置 AI 供应商的 API Key 以启用 AI 功能' : undefined
-        }
-      >
-        {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Lightbulb className="h-4 w-4" />}
-        {loading ? 'AI 正在思考...' : 'AI 深度讲解'}
-      </Button>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          type="button"
+          variant="secondary"
+          onClick={explain}
+          disabled={!status.configured || loading}
+          title={!status.configured ? '请先配置文本 AI，生图 AI 不会启用文字讲解' : undefined}
+        >
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Lightbulb className="h-4 w-4" />
+          )}
+          {loading ? 'AI 正在思考...' : status.configured ? 'AI 深度讲解' : '未配置文本 AI'}
+        </Button>
+        {!status.configured ? (
+          <Button asChild variant="ghost">
+            <Link href="/profile">去配置</Link>
+          </Button>
+        ) : null}
+      </div>
+      {!status.configured ? (
+        <p className="mt-3 rounded-2xl bg-softYellow px-4 py-3 text-sm font-bold text-muted">
+          AI 深度讲解需要配置文本 AI；生图 AI 只用于错题讲解图。
+        </p>
+      ) : null}
       {error ? (
         <p className="mt-3 rounded-2xl bg-red-50 px-4 py-3 text-sm font-black text-red-600">
           {error}

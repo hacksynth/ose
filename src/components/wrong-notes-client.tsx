@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  ImageIcon,
   Loader2,
   RefreshCw,
   Trash2,
@@ -15,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { AIExplainButton } from '@/components/ai-explain-button';
+import { AIWrongNoteImageButton } from '@/components/ai-wrong-note-image-button';
 import { MarkdownRenderer } from '@/components/markdown-renderer';
 import { OSESelect } from '@/components/ose-select';
 import { showToast } from '@/lib/toast-client';
@@ -42,6 +44,27 @@ type WrongNotesResponse = {
   items: WrongItem[];
   pagination: { page: number; totalPages: number; total: number };
 };
+type WrongNoteImageStatus = 'PENDING' | 'RUNNING' | 'COMPLETED' | 'FAILED';
+type WrongNoteImageGeneration = {
+  id: string;
+  status: WrongNoteImageStatus;
+  imageUrl: string | null;
+  errorMessage: string | null;
+};
+type WrongNoteImageState = {
+  status: WrongNoteImageStatus;
+  generationId?: string;
+  error?: string;
+};
+type WrongNoteImageBatchItem = {
+  wrongNoteId: string;
+  generation?: WrongNoteImageGeneration | null;
+  error?: string;
+};
+type WrongNoteImageBatchResponse = {
+  items?: WrongNoteImageBatchItem[];
+  message?: string;
+};
 
 function formatTime(value: string) {
   return new Intl.DateTimeFormat('zh-CN', {
@@ -52,6 +75,25 @@ function formatTime(value: string) {
   }).format(new Date(value));
 }
 
+function isActiveImageStatus(status: WrongNoteImageStatus | undefined) {
+  return status === 'PENDING' || status === 'RUNNING';
+}
+
+function imageStatusLabel(state?: WrongNoteImageState) {
+  if (state?.status === 'PENDING') return '讲解图排队中';
+  if (state?.status === 'RUNNING') return '讲解图生成中';
+  if (state?.status === 'COMPLETED') return '讲解图完成';
+  if (state?.status === 'FAILED') return '讲解图失败';
+  return '';
+}
+
+function imageStatusClass(state?: WrongNoteImageState) {
+  if (state?.status === 'COMPLETED') return 'bg-green-100 text-green-700';
+  if (isActiveImageStatus(state?.status)) return 'bg-amber-100 text-amber-700';
+  if (state?.status === 'FAILED') return 'bg-red-100 text-red-600';
+  return 'bg-gray-100 text-muted';
+}
+
 export function WrongNotesClient() {
   const router = useRouter();
   const [data, setData] = useState<WrongNotesResponse | null>(null);
@@ -59,6 +101,9 @@ export function WrongNotesClient() {
   const [topic, setTopic] = useState('');
   const [status, setStatus] = useState('all');
   const [page, setPage] = useState(1);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [batchingImages, setBatchingImages] = useState(false);
+  const [imageStates, setImageStates] = useState<Record<string, WrongNoteImageState>>({});
   const queryString = useMemo(
     () =>
       new URLSearchParams({
@@ -70,6 +115,19 @@ export function WrongNotesClient() {
     [page, status, topic]
   );
   const loadControllerRef = useRef<AbortController | null>(null);
+  const batchPollControllerRef = useRef<AbortController | null>(null);
+  const visibleIds = useMemo(() => data?.items.map((item) => item.id) ?? [], [data?.items]);
+  const visibleIdsKey = visibleIds.join('|');
+  const selectedCount = selectedIds.size;
+  const allVisibleSelected = visibleIds.length > 0 && visibleIds.every((id) => selectedIds.has(id));
+  const activeImageIdsKey = useMemo(
+    () =>
+      Object.entries(imageStates)
+        .filter(([, state]) => isActiveImageStatus(state.status))
+        .map(([id]) => id)
+        .join('|'),
+    [imageStates]
+  );
 
   const load = useCallback(async () => {
     loadControllerRef.current?.abort();
@@ -95,10 +153,74 @@ export function WrongNotesClient() {
     }
   }, [queryString]);
 
+  const applyBatchItems = useCallback((items: WrongNoteImageBatchItem[]) => {
+    setImageStates((prev) => {
+      const next = { ...prev };
+      for (const item of items) {
+        if (item.generation) {
+          next[item.wrongNoteId] = {
+            status: item.generation.status,
+            generationId: item.generation.id,
+            error: item.generation.errorMessage ?? undefined,
+          };
+        } else if (item.error) {
+          next[item.wrongNoteId] = { status: 'FAILED', error: item.error };
+        }
+      }
+      return next;
+    });
+  }, []);
+
+  const pollBatchImageStatuses = useCallback(
+    async (wrongNoteIds: string[]) => {
+      if (wrongNoteIds.length === 0) return;
+      batchPollControllerRef.current?.abort();
+      const controller = new AbortController();
+      batchPollControllerRef.current = controller;
+      const params = new URLSearchParams({ wrongNoteIds: wrongNoteIds.join(',') });
+      try {
+        const response = await fetch(`/api/ai/wrong-note-image/batch?${params.toString()}`, {
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+        const json = (await response.json().catch(() => ({}))) as WrongNoteImageBatchResponse;
+        if (response.ok) applyBatchItems(json.items ?? []);
+      } catch (error) {
+        if ((error as { name?: string })?.name !== 'AbortError') {
+          showToast({ title: '讲解图状态刷新失败', description: '请稍后重试' });
+        }
+      } finally {
+        if (batchPollControllerRef.current === controller) batchPollControllerRef.current = null;
+      }
+    },
+    [applyBatchItems]
+  );
+
   useEffect(() => {
     load();
   }, [load]);
-  useEffect(() => () => loadControllerRef.current?.abort(), []);
+  useEffect(
+    () => () => {
+      loadControllerRef.current?.abort();
+      batchPollControllerRef.current?.abort();
+    },
+    []
+  );
+  useEffect(() => {
+    const visible = new Set(visibleIds);
+    setSelectedIds((prev) => {
+      const next = new Set([...prev].filter((id) => visible.has(id)));
+      return next.size === prev.size ? prev : next;
+    });
+  }, [visibleIdsKey, visibleIds]);
+  useEffect(() => {
+    if (!activeImageIdsKey) return;
+    const ids = activeImageIdsKey.split('|').filter(Boolean);
+    const timer = window.setInterval(() => {
+      void pollBatchImageStatuses(ids);
+    }, 2500);
+    return () => window.clearInterval(timer);
+  }, [activeImageIdsKey, pollBatchImageStatuses]);
 
   const patchNote = useCallback(
     async (id: string, markedMastered: boolean) => {
@@ -174,6 +296,68 @@ export function WrongNotesClient() {
     },
     [load]
   );
+
+  const toggleWrongNoteSelection = useCallback((id: string, checked: boolean) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }, []);
+
+  const toggleVisibleSelection = useCallback(
+    (checked: boolean) => {
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        for (const id of visibleIds) {
+          if (checked) next.add(id);
+          else next.delete(id);
+        }
+        return next;
+      });
+    },
+    [visibleIds]
+  );
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
+
+  const batchGenerateImages = useCallback(async () => {
+    const wrongNoteIds = Array.from(selectedIds);
+    if (wrongNoteIds.length === 0) return;
+    setBatchingImages(true);
+    try {
+      const response = await fetch('/api/ai/wrong-note-image/batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wrongNoteIds }),
+      });
+      const json = (await response.json().catch(() => ({}))) as WrongNoteImageBatchResponse;
+      if (!response.ok) {
+        showToast({ title: '批量生成失败', description: json.message || '请稍后重试' });
+        return;
+      }
+      const items = json.items ?? [];
+      applyBatchItems(items);
+      const activeCount = items.filter((item) =>
+        isActiveImageStatus(item.generation?.status)
+      ).length;
+      const completedCount = items.filter((item) => item.generation?.status === 'COMPLETED').length;
+      const failedCount = items.filter(
+        (item) => item.error || item.generation?.status === 'FAILED'
+      ).length;
+      showToast({
+        title: activeCount > 0 ? '讲解图任务已加入队列' : '批量讲解图已处理',
+        description: `排队/生成 ${activeCount}，已完成 ${completedCount}，失败 ${failedCount}`,
+      });
+    } catch {
+      showToast({ title: '网络异常', description: '请稍后再试' });
+    } finally {
+      setBatchingImages(false);
+    }
+  }, [applyBatchItems, selectedIds]);
 
   async function retryAll() {
     try {
@@ -281,6 +465,47 @@ export function WrongNotesClient() {
         </div>
       </Card>
 
+      {!loading && data && data.items.length > 0 ? (
+        <Card className="p-4 hover:translate-y-0">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <label className="inline-flex min-w-0 items-center gap-3 font-black text-navy">
+              <input
+                type="checkbox"
+                className="h-5 w-5 shrink-0 accent-primary"
+                checked={allVisibleSelected}
+                onChange={(event) => toggleVisibleSelection(event.currentTarget.checked)}
+                aria-label="选择本页全部错题"
+              />
+              <span className="truncate">
+                已选 {selectedCount} 道，本页 {visibleIds.length} 道
+              </span>
+            </label>
+            <div className="grid gap-2 sm:flex sm:flex-wrap sm:justify-end">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={clearSelection}
+                disabled={selectedCount === 0 || batchingImages}
+              >
+                清空选择
+              </Button>
+              <Button
+                type="button"
+                onClick={batchGenerateImages}
+                disabled={selectedCount === 0 || batchingImages}
+              >
+                {batchingImages ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <ImageIcon className="h-4 w-4" />
+                )}
+                批量生成讲解图
+              </Button>
+            </div>
+          </div>
+        </Card>
+      ) : null}
+
       {loading ? (
         <Card className="p-8 text-center font-black text-muted">
           <Loader2 className="mx-auto mb-3 h-7 w-7 animate-spin text-primary" />
@@ -298,7 +523,15 @@ export function WrongNotesClient() {
       ) : null}
       <div className="space-y-4">
         {data?.items.map((item) => (
-          <WrongNoteRow key={item.id} item={item} onToggle={patchNote} onDelete={deleteNote} />
+          <WrongNoteRow
+            key={item.id}
+            item={item}
+            selected={selectedIds.has(item.id)}
+            imageState={imageStates[item.id]}
+            onSelect={toggleWrongNoteSelection}
+            onToggle={patchNote}
+            onDelete={deleteNote}
+          />
         ))}
       </div>
       {data && data.pagination.totalPages > 1 ? (
@@ -328,11 +561,21 @@ export function WrongNotesClient() {
 
 type RowProps = {
   item: WrongItem;
+  selected: boolean;
+  imageState?: WrongNoteImageState;
+  onSelect: (id: string, checked: boolean) => void;
   onToggle: (id: string, mastered: boolean) => void;
   onDelete: (id: string) => void;
 };
 
-const WrongNoteRow = memo(function WrongNoteRow({ item, onToggle, onDelete }: RowProps) {
+const WrongNoteRow = memo(function WrongNoteRow({
+  item,
+  selected: rowSelected,
+  imageState,
+  onSelect,
+  onToggle,
+  onDelete,
+}: RowProps) {
   const [open, setOpen] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const [selected, setSelected] = useState('');
@@ -378,140 +621,173 @@ const WrongNoteRow = memo(function WrongNoteRow({ item, onToggle, onDelete }: Ro
 
   return (
     <Card className="p-5 hover:translate-y-0">
-      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
-        <div className="min-w-0 flex-1">
-          <div className="mb-3 flex flex-wrap gap-2">
-            <span className="rounded-full bg-primary-soft px-3 py-1 text-xs font-black text-primary">
-              {topicName}
-            </span>
-            <span
-              className={cn(
-                'rounded-full px-3 py-1 text-xs font-black',
-                item.markedMastered ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
-              )}
-            >
-              {item.markedMastered ? '已掌握' : '未掌握'}
-            </span>
-          </div>
-          <h2 className="font-black leading-relaxed text-navy">{preview}</h2>
-          <p className="mt-2 text-sm font-semibold text-muted">
-            做错 {item.wrongCount} 次 · 最近做错 {formatTime(item.lastWrongAt)}
-          </p>
-        </div>
-        <div className="grid gap-2 sm:flex sm:flex-wrap">
-          <Button
-            variant="secondary"
-            onClick={() => setOpen((value) => !value)}
-            aria-expanded={open}
-            aria-label={open ? '收起详情' : '展开详情'}
-          >
-            {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}详情
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={() => onToggle(item.id, !item.markedMastered)}
-            aria-pressed={item.markedMastered}
-          >
-            {item.markedMastered ? '取消掌握' : '标记已掌握'}
-          </Button>
-          <Button variant="ghost" onClick={() => onDelete(item.id)} aria-label="从错题本删除">
-            <Trash2 className="h-4 w-4" />
-            删除
-          </Button>
-        </div>
-      </div>
-      {open ? (
-        <div className="mt-6 border-t border-orange-100 pt-6">
-          <MarkdownRenderer
-            content={item.question.content}
-            className="text-xl font-black leading-relaxed text-navy [&_img]:my-3 [&_img]:rounded-2xl"
+      <div className="flex gap-4">
+        <label
+          className={cn(
+            'mt-1 flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 bg-white transition',
+            rowSelected ? 'border-primary bg-primary-soft' : 'border-orange-100'
+          )}
+        >
+          <input
+            type="checkbox"
+            className="h-5 w-5 accent-primary"
+            checked={rowSelected}
+            onChange={(event) => onSelect(item.id, event.currentTarget.checked)}
+            aria-label="选择这道错题"
           />
-          <div className="mt-5 grid gap-3">
-            {item.question.options.map((option) => {
-              const isWrong = option.id === item.wrongOptionId;
-              const isCorrect = option.id === item.correctOption?.id;
-              const retrySelected = option.id === selected;
-              const retryCorrect = result?.correctOptionId === option.id;
-              const retryWrong = result && retrySelected && !result.isCorrect;
-              return (
-                <button
-                  key={option.id}
-                  disabled={!retrying || Boolean(result)}
-                  onClick={() => setSelected(option.id)}
+        </label>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
+            <div className="min-w-0 flex-1">
+              <div className="mb-3 flex flex-wrap gap-2">
+                <span className="rounded-full bg-primary-soft px-3 py-1 text-xs font-black text-primary">
+                  {topicName}
+                </span>
+                <span
                   className={cn(
-                    'rounded-2xl border-2 bg-white p-4 text-left font-bold transition',
-                    isWrong && !retrying && 'border-red-300 bg-red-50 text-red-700',
-                    isCorrect && !retrying && 'border-green-300 bg-green-50 text-green-700',
-                    retrySelected && !result && 'border-primary bg-primary-soft',
-                    retryCorrect && result && 'border-green-300 bg-green-50 text-green-700',
-                    retryWrong && 'border-red-300 bg-red-50 text-red-700'
+                    'rounded-full px-3 py-1 text-xs font-black',
+                    item.markedMastered ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'
                   )}
                 >
-                  {option.label}. {option.content}
-                </button>
-              );
-            })}
-          </div>
-          {!retrying ? (
-            <div className="mt-5 rounded-3xl bg-white p-5 shadow-soft">
-              <p className="font-black text-navy">解析</p>
-              <p className="mt-2 font-semibold leading-7 text-muted">{item.question.explanation}</p>
-              <AIExplainButton
-                questionId={item.question.id}
-                userAnswerOptionId={item.wrongOptionId}
-              />
-            </div>
-          ) : null}
-          {result ? (
-            <div className="mt-5 rounded-3xl bg-white p-5 shadow-soft">
-              <p className="flex items-center gap-2 font-black text-navy">
-                {result.isCorrect ? (
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
-                ) : (
-                  <XCircle className="h-5 w-5 text-red-500" />
-                )}
-                {result.isCorrect ? '重练答对了，可以标记掌握' : '这次仍然答错，继续留在错题本'}
+                  {item.markedMastered ? '已掌握' : '未掌握'}
+                </span>
+                {imageState ? (
+                  <span
+                    className={cn(
+                      'rounded-full px-3 py-1 text-xs font-black',
+                      imageStatusClass(imageState)
+                    )}
+                    title={imageState.error}
+                  >
+                    {imageStatusLabel(imageState)}
+                  </span>
+                ) : null}
+              </div>
+              <h2 className="font-black leading-relaxed text-navy">{preview}</h2>
+              <p className="mt-2 text-sm font-semibold text-muted">
+                做错 {item.wrongCount} 次 · 最近做错 {formatTime(item.lastWrongAt)}
               </p>
-              <p className="mt-2 font-semibold leading-7 text-muted">{result.explanation}</p>
-              {result.isCorrect ? (
-                <Button className="mt-4" onClick={() => onToggle(item.id, true)}>
-                  标记已掌握
-                </Button>
-              ) : null}
             </div>
-          ) : null}
-          <div className="mt-5 grid gap-3 sm:flex">
-            {retrying ? (
-              <Button onClick={submitRetry} disabled={!selected || submitting}>
-                {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}提交重练
-              </Button>
-            ) : (
-              <Button
-                onClick={() => {
-                  setRetrying(true);
-                  setResult(null);
-                  setSelected('');
-                  setRetryStartedAt(Date.now());
-                }}
-              >
-                重新作答
-              </Button>
-            )}
-            {retrying ? (
+            <div className="grid gap-2 sm:flex sm:flex-wrap">
               <Button
                 variant="secondary"
-                onClick={() => {
-                  setRetrying(false);
-                  setResult(null);
-                  setSelected('');
-                }}
+                onClick={() => setOpen((value) => !value)}
+                aria-expanded={open}
+                aria-label={open ? '收起详情' : '展开详情'}
               >
-                查看答案
+                {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                详情
               </Button>
-            ) : null}
+              <Button
+                variant="secondary"
+                onClick={() => onToggle(item.id, !item.markedMastered)}
+                aria-pressed={item.markedMastered}
+              >
+                {item.markedMastered ? '取消掌握' : '标记已掌握'}
+              </Button>
+              <Button variant="ghost" onClick={() => onDelete(item.id)} aria-label="从错题本删除">
+                <Trash2 className="h-4 w-4" />
+                删除
+              </Button>
+            </div>
           </div>
+          {open ? (
+            <div className="mt-6 border-t border-orange-100 pt-6">
+              <MarkdownRenderer
+                content={item.question.content}
+                className="text-xl font-black leading-relaxed text-navy [&_img]:my-3 [&_img]:rounded-2xl"
+              />
+              <div className="mt-5 grid gap-3">
+                {item.question.options.map((option) => {
+                  const isWrong = option.id === item.wrongOptionId;
+                  const isCorrect = option.id === item.correctOption?.id;
+                  const retrySelected = option.id === selected;
+                  const retryCorrect = result?.correctOptionId === option.id;
+                  const retryWrong = result && retrySelected && !result.isCorrect;
+                  return (
+                    <button
+                      key={option.id}
+                      disabled={!retrying || Boolean(result)}
+                      onClick={() => setSelected(option.id)}
+                      className={cn(
+                        'rounded-2xl border-2 bg-white p-4 text-left font-bold transition',
+                        isWrong && !retrying && 'border-red-300 bg-red-50 text-red-700',
+                        isCorrect && !retrying && 'border-green-300 bg-green-50 text-green-700',
+                        retrySelected && !result && 'border-primary bg-primary-soft',
+                        retryCorrect && result && 'border-green-300 bg-green-50 text-green-700',
+                        retryWrong && 'border-red-300 bg-red-50 text-red-700'
+                      )}
+                    >
+                      {option.label}. {option.content}
+                    </button>
+                  );
+                })}
+              </div>
+              {!retrying ? (
+                <div className="mt-5 rounded-3xl bg-white p-5 shadow-soft">
+                  <p className="font-black text-navy">解析</p>
+                  <p className="mt-2 font-semibold leading-7 text-muted">
+                    {item.question.explanation}
+                  </p>
+                  <AIExplainButton
+                    questionId={item.question.id}
+                    userAnswerOptionId={item.wrongOptionId}
+                  />
+                  <AIWrongNoteImageButton wrongNoteId={item.id} />
+                </div>
+              ) : null}
+              {result ? (
+                <div className="mt-5 rounded-3xl bg-white p-5 shadow-soft">
+                  <p className="flex items-center gap-2 font-black text-navy">
+                    {result.isCorrect ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-600" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-red-500" />
+                    )}
+                    {result.isCorrect ? '重练答对了，可以标记掌握' : '这次仍然答错，继续留在错题本'}
+                  </p>
+                  <p className="mt-2 font-semibold leading-7 text-muted">{result.explanation}</p>
+                  {result.isCorrect ? (
+                    <Button className="mt-4" onClick={() => onToggle(item.id, true)}>
+                      标记已掌握
+                    </Button>
+                  ) : null}
+                </div>
+              ) : null}
+              <div className="mt-5 grid gap-3 sm:flex">
+                {retrying ? (
+                  <Button onClick={submitRetry} disabled={!selected || submitting}>
+                    {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : null}提交重练
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={() => {
+                      setRetrying(true);
+                      setResult(null);
+                      setSelected('');
+                      setRetryStartedAt(Date.now());
+                    }}
+                  >
+                    重新作答
+                  </Button>
+                )}
+                {retrying ? (
+                  <Button
+                    variant="secondary"
+                    onClick={() => {
+                      setRetrying(false);
+                      setResult(null);
+                      setSelected('');
+                    }}
+                  >
+                    查看答案
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
         </div>
-      ) : null}
+      </div>
     </Card>
   );
 });

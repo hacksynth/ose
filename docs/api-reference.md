@@ -21,6 +21,11 @@ Most API routes require an authenticated session unless noted.
 - `POST /api/ai/generate-case`: generates a case analysis question.
 - `POST /api/ai/variant-questions`: generates variants of an existing question.
 - `GET /api/ai/generate-history`: returns AI-generated question history.
+- `GET /api/ai/wrong-note-image?wrongNoteId=...`: returns the latest reusable wrong-note explanation image task for the current settings.
+- `POST /api/ai/wrong-note-image`: queues or reuses a wrong-note explanation image task. Body: `{ "wrongNoteId": "...", "force": false }`.
+- `GET /api/ai/wrong-note-image/batch?wrongNoteIds=id1,id2`: returns task status for multiple wrong notes.
+- `POST /api/ai/wrong-note-image/batch`: queues or reuses multiple wrong-note explanation image tasks. Body: `{ "wrongNoteIds": ["..."], "force": false }`.
+- `GET /api/ai/wrong-note-image/[id]/file`: streams a generated image file after checking ownership.
 
 Common AI error responses:
 
@@ -79,6 +84,10 @@ Common AI error responses:
 - `DELETE /api/profile/ai-settings`: removes user AI settings.
 - `POST /api/profile/ai-settings/test`: tests a provider configuration.
 - `POST /api/profile/ai-settings/models`: lists provider models when supported.
+- `POST /api/profile/ai-settings/image-test`: tests image provider connectivity through the image model list endpoint.
+- `POST /api/profile/ai-settings/image-models`: lists image provider models when supported.
+
+The AI settings endpoints also accept image provider fields: `imageProvider`, `imageModel`, `imageApiKey`, `imageBaseUrl`, `imageSize`, `imageQuality`, `imageOutputFormat`, and `imageStyle`.
 
 ## Wrong Notes
 

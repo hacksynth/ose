@@ -1,0 +1,2 @@
+-- SQLite stores Prisma enums as TEXT, so adding RUNNING to AIImageGenerationStatus
+-- only requires updating the Prisma schema/client.

@@ -46,59 +46,75 @@ enum ExamSession {
   PM
 }
 
+enum AIImageGenerationStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
 model User {
-  id          String       @id @default(cuid())
-  email       String       @unique
-  password    String
-  name        String
-  targetExamDate DateTime?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  answers     UserAnswer[]
-  wrongNotes  WrongNote[]
-  practiceSessions PracticeSession[]
-  caseAnswers      UserCaseAnswer[]
-  examAttempts     ExamAttempt[]
-  studyPlans       StudyPlan[]
-  aiGenerations    AIQuestionGeneration[]
-  aiChatSessions   AIChatSession[]
-  aiSettings       UserAISettings?
+  id                  String                 @id @default(cuid())
+  email               String                 @unique
+  password            String
+  name                String
+  targetExamDate      DateTime?
+  createdAt           DateTime               @default(now())
+  updatedAt           DateTime               @updatedAt
+  answers             UserAnswer[]
+  wrongNotes          WrongNote[]
+  practiceSessions    PracticeSession[]
+  caseAnswers         UserCaseAnswer[]
+  examAttempts        ExamAttempt[]
+  studyPlans          StudyPlan[]
+  aiGenerations       AIQuestionGeneration[]
+  aiImageGenerations  AIImageGeneration[]
+  aiChatSessions      AIChatSession[]
+  aiSettings          UserAISettings?
   passwordResetTokens PasswordResetToken[]
 
   @@index([createdAt])
 }
 
 model UserAISettings {
-  userId    String   @id
-  provider  String?
-  model     String?
-  apiKey    String?
-  baseUrl   String?
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId            String   @id
+  provider          String?
+  model             String?
+  apiKey            String?
+  baseUrl           String?
+  imageProvider     String?
+  imageModel        String?
+  imageApiKey       String?
+  imageBaseUrl      String?
+  imageSize         String?
+  imageQuality      String?
+  imageOutputFormat String?
+  imageStyle        String?
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model PasswordResetToken {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    String
-  tokenHash String   @unique
+  tokenHash String    @unique
   expiresAt DateTime
   usedAt    DateTime?
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])
 }
 
 model KnowledgePoint {
-  id          String            @id @default(cuid())
+  id          String           @id @default(cuid())
   name        String
   parentId    String?
-  sortOrder   Int               @default(0)
+  sortOrder   Int              @default(0)
   description String?
-  parent      KnowledgePoint?   @relation("KnowledgePointTree", fields: [parentId], references: [id], onDelete: SetNull)
-  children    KnowledgePoint[]  @relation("KnowledgePointTree")
+  parent      KnowledgePoint?  @relation("KnowledgePointTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children    KnowledgePoint[] @relation("KnowledgePointTree")
   questions   Question[]
 
   @@index([parentId])
@@ -106,29 +122,30 @@ model KnowledgePoint {
 }
 
 model Question {
-  id               String           @id @default(cuid())
-  content          String
-  type             QuestionType     @default(CHOICE)
-  difficulty       Int
-  year             Int
-  session          ExamSession
-  questionNumber   Int
-  explanation      String
-  isAIGenerated    Boolean          @default(false)
-  aiGeneratedBy    String?
-  createdByUserId  String?
-  knowledgePointId String
-  knowledgePoint   KnowledgePoint   @relation(fields: [knowledgePointId], references: [id], onDelete: Restrict)
-  options          QuestionOption[]
-  userAnswers      UserAnswer[]
-  wrongNotes       WrongNote[]
-  practiceSessions PracticeSessionQuestion[]
-  caseScenario    CaseScenario?
-  examQuestions   ExamQuestion[]
-  examAnswers     ExamAnswer[]
+  id                 String                    @id @default(cuid())
+  content            String
+  type               QuestionType              @default(CHOICE)
+  difficulty         Int
+  year               Int
+  session            ExamSession
+  questionNumber     Int
+  explanation        String
+  isAIGenerated      Boolean                   @default(false)
+  aiGeneratedBy      String?
+  createdByUserId    String?
+  knowledgePointId   String
+  knowledgePoint     KnowledgePoint            @relation(fields: [knowledgePointId], references: [id], onDelete: Restrict)
+  options            QuestionOption[]
+  userAnswers        UserAnswer[]
+  wrongNotes         WrongNote[]
+  aiImageGenerations AIImageGeneration[]
+  practiceSessions   PracticeSessionQuestion[]
+  caseScenario       CaseScenario?
+  examQuestions      ExamQuestion[]
+  examAnswers        ExamAnswer[]
 
-  @@index([isAIGenerated])
   @@unique([year, session, questionNumber])
+  @@index([isAIGenerated])
   @@index([knowledgePointId])
   @@index([difficulty])
   @@index([year, session])
@@ -164,13 +181,13 @@ model AIChatSession {
 }
 
 model QuestionOption {
-  id         String       @id @default(cuid())
-  questionId String
-  label      String
-  content    String
-  isCorrect  Boolean      @default(false)
-  question   Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  answers    UserAnswer[]
+  id          String       @id @default(cuid())
+  questionId  String
+  label       String
+  content     String
+  isCorrect   Boolean      @default(false)
+  question    Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  answers     UserAnswer[]
   examAnswers ExamAnswer[]
 
   @@unique([questionId, label])
@@ -179,18 +196,18 @@ model QuestionOption {
 }
 
 model UserAnswer {
-  id               String          @id @default(cuid())
-  userId           String
-  questionId       String
-  selectedOptionId String
+  id                String           @id @default(cuid())
+  userId            String
+  questionId        String
+  selectedOptionId  String
   practiceSessionId String?
-  isCorrect        Boolean
-  timeSpent        Int
-  createdAt        DateTime        @default(now())
-  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  question         Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  selectedOption   QuestionOption  @relation(fields: [selectedOptionId], references: [id], onDelete: Restrict)
-  practiceSession  PracticeSession? @relation(fields: [practiceSessionId], references: [id], onDelete: SetNull)
+  isCorrect         Boolean
+  timeSpent         Int
+  createdAt         DateTime         @default(now())
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question          Question         @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOption    QuestionOption   @relation(fields: [selectedOptionId], references: [id], onDelete: Restrict)
+  practiceSession   PracticeSession? @relation(fields: [practiceSessionId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
   @@index([practiceSessionId])
@@ -228,27 +245,63 @@ model PracticeSessionQuestion {
 }
 
 model WrongNote {
-  id             String    @id @default(cuid())
-  userId         String
-  questionId     String
-  note           String?
-  markedMastered Boolean   @default(false)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  question       Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  id                 String              @id @default(cuid())
+  userId             String
+  questionId         String
+  note               String?
+  markedMastered     Boolean             @default(false)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question           Question            @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  aiImageGenerations AIImageGeneration[]
 
   @@unique([userId, questionId])
   @@index([userId, markedMastered])
   @@index([questionId])
   @@index([createdAt])
 }
+
+model AIImageGeneration {
+  id                String                  @id @default(cuid())
+  userId            String
+  questionId        String
+  wrongNoteId       String?
+  wrongOptionId     String?
+  status            AIImageGenerationStatus @default(PENDING)
+  provider          String
+  model             String
+  promptProvider    String
+  promptModel       String
+  imageSize         String
+  imageQuality      String
+  imageOutputFormat String
+  imageStyle        String
+  fingerprint       String
+  promptPayload     Json?
+  imagePrompt       String?
+  imagePath         String?
+  sourceImagePath   String?
+  errorMessage      String?
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+  completedAt       DateTime?
+  user              User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question          Question                @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  wrongNote         WrongNote?              @relation(fields: [wrongNoteId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([questionId])
+  @@index([wrongNoteId, status, createdAt])
+  @@index([fingerprint])
+}
+
 model CaseScenario {
-  id          String            @id @default(cuid())
-  questionId  String            @unique
-  background  String
-  figures     Json?
-  question    Question          @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  id           String            @id @default(cuid())
+  questionId   String            @unique
+  background   String
+  figures      Json?
+  question     Question          @relation(fields: [questionId], references: [id], onDelete: Cascade)
   subQuestions CaseSubQuestion[]
 
   @@index([questionId])
@@ -285,6 +338,7 @@ model UserCaseAnswer {
   @@index([userId, createdAt])
   @@index([caseSubQuestionId])
 }
+
 model Exam {
   id              String          @id @default(cuid())
   title           String
@@ -303,12 +357,12 @@ model Exam {
 }
 
 model ExamQuestion {
-  id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
   examId      String
   questionId  String
   orderNumber Int
-  exam        Exam      @relation(fields: [examId], references: [id], onDelete: Cascade)
-  question    Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  exam        Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
   @@unique([examId, questionId])
   @@unique([examId, orderNumber])
@@ -335,22 +389,23 @@ model ExamAttempt {
 }
 
 model ExamAnswer {
-  id               String       @id @default(cuid())
+  id               String          @id @default(cuid())
   examAttemptId    String
-  questionId        String
-  selectedOptionId  String?
-  caseAnswers       Json?
-  isCorrect         Boolean?
-  score             Int?
-  timeSpent         Int         @default(0)
-  examAttempt       ExamAttempt @relation(fields: [examAttemptId], references: [id], onDelete: Cascade)
-  question          Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  selectedOption    QuestionOption? @relation(fields: [selectedOptionId], references: [id], onDelete: SetNull)
+  questionId       String
+  selectedOptionId String?
+  caseAnswers      Json?
+  isCorrect        Boolean?
+  score            Int?
+  timeSpent        Int             @default(0)
+  examAttempt      ExamAttempt     @relation(fields: [examAttemptId], references: [id], onDelete: Cascade)
+  question         Question        @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOption   QuestionOption? @relation(fields: [selectedOptionId], references: [id], onDelete: SetNull)
 
   @@unique([examAttemptId, questionId])
   @@index([questionId])
   @@index([selectedOptionId])
 }
+
 model StudyPlan {
   id             String          @id @default(cuid())
   userId         String

@@ -4,6 +4,7 @@ out
 dist
 build
 coverage
+storage/
 
 .env
 .env*.local

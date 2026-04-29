@@ -1,31 +1,34 @@
-import NextAuth from "next-auth";
-import Credentials from "next-auth/providers/credentials";
-import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/prisma";
+import NextAuth from 'next-auth';
+import Credentials from 'next-auth/providers/credentials';
+import bcrypt from 'bcryptjs';
+import { prisma } from '@/lib/prisma';
 
 // Pre-computed hash used to keep authorize() running in roughly constant time
 // when the email is not registered, reducing email-enumeration timing leak.
-const DUMMY_HASH = "$2a$12$CwTycUXWue0Thq9StjUM0uJ8.lVvnV4dEDqQ3oYBE1zxOzl1sQVIu";
+const DUMMY_HASH = '$2a$12$CwTycUXWue0Thq9StjUM0uJ8.lVvnV4dEDqQ3oYBE1zxOzl1sQVIu';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  secret: process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET,
   pages: {
-    signIn: "/login",
+    signIn: '/login',
   },
   session: {
-    strategy: "jwt",
+    strategy: 'jwt',
     maxAge: 7 * 24 * 60 * 60,
     updateAge: 24 * 60 * 60,
   },
   providers: [
     Credentials({
-      name: "邮箱密码登录",
+      name: '邮箱密码登录',
       credentials: {
-        email: { label: "邮箱", type: "email" },
-        password: { label: "密码", type: "password" },
+        email: { label: '邮箱', type: 'email' },
+        password: { label: '密码', type: 'password' },
       },
       async authorize(credentials) {
-        const email = String(credentials?.email ?? "").trim().toLowerCase();
-        const password = String(credentials?.password ?? "");
+        const email = String(credentials?.email ?? '')
+          .trim()
+          .toLowerCase();
+        const password = String(credentials?.password ?? '');
 
         if (!email || !password) return null;
 
@@ -57,8 +60,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
     async session({ session, token }) {
       if (session.user) {
-        if (typeof token.id === "string") session.user.id = token.id;
-        if (typeof token.name === "string") session.user.name = token.name;
+        if (typeof token.id === 'string') session.user.id = token.id;
+        if (typeof token.name === 'string') session.user.name = token.name;
       }
       return session;
     },

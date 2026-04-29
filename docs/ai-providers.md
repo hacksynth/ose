@@ -51,6 +51,40 @@ Custom mode works with OpenAI-compatible APIs such as Ollama, DeepSeek, Qwen, vL
 
 Users can configure provider, key, base URL, and model from the profile page. This is useful for shared deployments where each learner brings their own API key.
 
+## Image Providers
+
+Wrong-note explanation images use a separate image provider configuration. The text AI provider first turns the wrong-note data into one final image prompt; the image provider then generates the complete Chinese review card in a single image call. OSE stores and serves the finished image.
+
+Supported image providers:
+
+- `openai`: OpenAI Images API, default model `gpt-image-2`.
+- `custom`: OpenAI-compatible image generation endpoint.
+
+Environment example:
+
+```env
+AI_IMAGE_PROVIDER=openai
+OPENAI_IMAGE_API_KEY=sk-...
+OPENAI_IMAGE_MODEL=gpt-image-2
+AI_IMAGE_SIZE=1024x1536
+AI_IMAGE_QUALITY=medium
+AI_IMAGE_OUTPUT_FORMAT=webp
+AI_IMAGE_STYLE=clean_education_card
+```
+
+For a compatible gateway:
+
+```env
+AI_IMAGE_PROVIDER=custom
+CUSTOM_IMAGE_BASE_URL=https://your-gateway.example.com/v1
+CUSTOM_IMAGE_API_KEY=...
+CUSTOM_IMAGE_MODEL=gpt-image-2
+```
+
+Users can also configure image provider, model, key, base URL, size, quality, format, and card style from the profile page. Image files are stored outside `public/` and served through authenticated API routes.
+
+Wrong-note image generation is asynchronous. Single and batch requests create tasks first, then a process-local worker queue runs image jobs with `AI_IMAGE_QUEUE_CONCURRENCY` concurrent workers. `AI_IMAGE_BATCH_MAX` controls the maximum wrong notes accepted by one batch request.
+
 ## Safety Notes
 
 - Do not commit real API keys.
