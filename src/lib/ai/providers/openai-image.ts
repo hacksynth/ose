@@ -1,5 +1,6 @@
 import { createReadStream } from 'fs';
-import OpenAI from 'openai';
+import path from 'path';
+import OpenAI, { toFile } from 'openai';
 import type {
   ImageEditParamsNonStreaming,
   ImageGenerateParamsNonStreaming,
@@ -15,6 +16,13 @@ function mimeTypeFor(format: string) {
   if (format === 'png') return 'image/png';
   if (format === 'jpeg') return 'image/jpeg';
   return 'image/webp';
+}
+
+function mimeTypeForImagePath(filePath: string) {
+  const extension = path.extname(filePath).toLowerCase();
+  if (extension === '.jpg' || extension === '.jpeg') return 'image/jpeg';
+  if (extension === '.webp') return 'image/webp';
+  return 'image/png';
 }
 
 async function bufferFromImageResult(image: { b64_json?: string; url?: string }, mimeType: string) {
@@ -42,14 +50,20 @@ function buildGenerateRequest(
   };
 }
 
-function buildEditRequest(
+async function buildEditRequest(
   model: string,
   params: Parameters<AIImageProvider['generateImage']>[0]
-): ImageEditParamsNonStreaming {
+): Promise<ImageEditParamsNonStreaming> {
   if (!params.referenceImagePath) throw new Error('缺少生图参考图');
   return {
     model,
-    image: createReadStream(params.referenceImagePath),
+    image: await toFile(
+      createReadStream(params.referenceImagePath),
+      path.basename(params.referenceImagePath),
+      {
+        type: mimeTypeForImagePath(params.referenceImagePath),
+      }
+    ),
     prompt: params.prompt,
     n: 1,
     size: params.size,
@@ -82,7 +96,7 @@ export function createOpenAIImageProvider(config: AIImageConfig): AIImageProvide
     async generateImage(params) {
       const mimeType = mimeTypeFor(params.outputFormat);
       const response = params.referenceImagePath
-        ? await getClient().images.edit(buildEditRequest(model, params))
+        ? await getClient().images.edit(await buildEditRequest(model, params))
         : await getClient().images.generate(buildGenerateRequest(model, params));
       const image = response.data?.[0];
       if (!image) throw new Error('图片模型没有返回结果');
@@ -123,7 +137,7 @@ export function createCustomImageProvider(config: AIImageConfig): AIImageProvide
     async generateImage(params) {
       const mimeType = mimeTypeFor(params.outputFormat);
       const response = params.referenceImagePath
-        ? await getClient().images.edit(buildEditRequest(model, params))
+        ? await getClient().images.edit(await buildEditRequest(model, params))
         : await getClient().images.generate(buildGenerateRequest(model, params));
       const image = response.data?.[0];
       if (!image) throw new Error('图片模型没有返回结果');
