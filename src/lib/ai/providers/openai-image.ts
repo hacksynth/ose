@@ -25,6 +25,11 @@ function mimeTypeForImagePath(filePath: string) {
   return 'image/png';
 }
 
+function supportsInputFidelity(model: string) {
+  const normalized = model.trim().toLowerCase();
+  return normalized === 'gpt-image-1' || normalized === 'gpt-image-1.5';
+}
+
 async function bufferFromImageResult(image: { b64_json?: string; url?: string }, mimeType: string) {
   if (image.b64_json) return Buffer.from(image.b64_json, 'base64');
   if (!image.url) throw new Error('图片模型没有返回图片数据');
@@ -55,7 +60,7 @@ async function buildEditRequest(
   params: Parameters<AIImageProvider['generateImage']>[0]
 ): Promise<ImageEditParamsNonStreaming> {
   if (!params.referenceImagePath) throw new Error('缺少生图参考图');
-  return {
+  const request: ImageEditParamsNonStreaming = {
     model,
     image: await toFile(
       createReadStream(params.referenceImagePath),
@@ -69,9 +74,10 @@ async function buildEditRequest(
     size: params.size,
     quality: params.quality,
     output_format: params.outputFormat,
-    input_fidelity: params.inputFidelity ?? 'high',
     user: params.user,
   };
+  if (supportsInputFidelity(model)) request.input_fidelity = params.inputFidelity ?? 'high';
+  return request;
 }
 
 export function createOpenAIImageProvider(config: AIImageConfig): AIImageProvider {
