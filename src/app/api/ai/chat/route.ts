@@ -30,7 +30,7 @@ export async function POST(request: Request) {
           message !== null &&
           'role' in message &&
           'content' in message &&
-          ['user', 'assistant'].includes(String((message as { role: unknown }).role)) &&
+          String((message as { role: unknown }).role) === 'user' &&
           typeof (message as { content: unknown }).content === 'string'
       )
       .map((message) => ({ ...message, content: message.content.slice(0, AI_MESSAGE_MAX_CHARS) }));
