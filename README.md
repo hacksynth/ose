@@ -30,7 +30,7 @@ The core promise is simple: **AI-Powered**, **Open Source**, and **Self-hostable
 
 ## Features
 
-- 📚 **Built-in question bank**: 41 历年真题 (2014–2025) — 1483 multiple-choice questions and 96 case scenarios with 263 sub-questions, AI-classified into a 56-node knowledge tree, baked into the seed so a fresh `db:seed` immediately produces a usable study workspace.
+- 📚 **Built-in question bank**: 41 历年真题 (2014–2025) — 1579 questions total: 1483 multiple-choice questions and 96 case-analysis questions, with the case-analysis questions further split into 263 sub-questions; AI-classified into a 56-node knowledge tree, baked into the seed so a fresh `db:seed` immediately produces a usable study workspace.
 - 🤖 **AI assistance**: Claude, OpenAI, Gemini, and custom endpoints for explanations, grading, question generation, diagnosis, and study plans.
 - 📊 **Learning analytics**: mastery heatmaps, weak-area diagnosis, predicted scores, and pass probability evaluation.
 - 📝 **Mock exams**: realistic exam sessions with countdown timers, answer sheets, and result reports.
@@ -61,7 +61,7 @@ npm run db:seed
 npm run dev
 ```
 
-Open `http://localhost:3000`, create an account, and start practicing. The seed step loads 41 历年真题 / 1579 questions / 96 case scenarios from `data/51cto-seed.json` (built from `data/51cto-exams/`); see `data/51cto-exams/INDEX.md` for the source pipeline and licensing notes.
+Open `http://localhost:3000`, create an account, and start practicing. The seed step loads 41 历年真题 / 1579 questions total (1483 multiple-choice + 96 case-analysis, further split into 263 sub-questions) from `data/51cto-seed.json` (built from `data/51cto-exams/`); see `data/51cto-exams/INDEX.md` for the source pipeline and licensing notes.
 
 ## Self-hosting Guide
 
@@ -97,7 +97,7 @@ node scripts/capture-screenshots.mjs
 - [x] Phase 3: AI 辅助（讲解/批改/出题/诊断/学习计划）
 - [x] Tauri 桌面版（支持 BUNDLE_NODE=1 自包含 Node.js）
 - [ ] 更多软考科目支持（信息系统项目管理师等）
-- [x] 历年真题内置(2014–2025,41 套,1579 题)
+- [x] 历年真题内置（2014–2025，41 套，1579 题：1483 选择题 + 96 案例题 / 263 小问）
 - [ ] PostgreSQL 生产部署支持
 - [ ] Docker Compose 一键部署
 - [ ] 国际化（i18n）
