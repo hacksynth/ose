@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { getUserAnalysis } from '@/lib/analysis';
 import { getChinaDateKey, getTodayRange } from '@/lib/stats';
 import { getOrSetAnalysis, getOrSetStable } from '@/lib/ai/context-cache';
+import { htmlToText } from '@/lib/utils/html-to-text';
 
 const MAX_CONTEXT_CHARS = 18_000;
 const MAX_TODAY_CHOICE_DETAILS = 80;
@@ -48,24 +49,6 @@ type ChoiceAnswerDetail = {
   question: QuestionLike;
   examTitle?: string;
 };
-
-function decodeBasicEntities(value: string) {
-  return value
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'");
-}
-
-function htmlToText(value: string) {
-  return decodeBasicEntities(value)
-    .replace(/<img\b[^>]*\bsrc=["']?([^"'\s>]+)["']?[^>]*>/gi, ' [图片:$1] ')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n')
-    .replace(/<[^>]+>/g, ' ');
-}
 
 function compactText(value: string | null | undefined, maxLength: number) {
   const text = htmlToText(value ?? '')
