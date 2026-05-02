@@ -36,10 +36,12 @@ if [ -n "${ANDROID_KEYSTORE_BASE64:-}" ] &&
   echo "Signing Android APKs with repository keystore secret."
 else
   store_password="android-ci-keystore"
-  key_password="android-ci-key"
+  key_password="$store_password"
   key_alias="ose-ci"
+  keystore_type="PKCS12"
   keytool -genkeypair \
     -keystore "$keystore" \
+    -storetype "$keystore_type" \
     -storepass "$store_password" \
     -keypass "$key_password" \
     -alias "$key_alias" \
