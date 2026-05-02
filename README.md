@@ -44,8 +44,8 @@ The core promise is simple: **AI-Powered**, **Open Source**, and **Self-hostable
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-38B2AC?logo=tailwindcss&logoColor=white)
 ![Prisma](https://img.shields.io/badge/Prisma-6-2D3748?logo=prisma&logoColor=white)
-![SQLite](https://img.shields.io/badge/SQLite-dev-003B57?logo=sqlite&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-production-4169E1?logo=postgresql&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-built--in-003B57?logo=sqlite&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-roadmap-4169E1?logo=postgresql&logoColor=white)
 ![Tauri](https://img.shields.io/badge/Tauri-desktop-24C8DB?logo=tauri&logoColor=white)
 ![shadcn/ui](https://img.shields.io/badge/shadcn%2Fui-components-111827)
 
@@ -65,9 +65,9 @@ Open `http://localhost:3000`, create an account, and start practicing. The seed 
 
 ## Self-hosting Guide
 
-OSE can run on Docker, a VPS, or Vercel-compatible hosting. SQLite works well for local and small deployments; PostgreSQL is recommended for production teams.
+OSE can run on Docker, a VPS, or Vercel-compatible hosting. OSE currently ships with SQLite as the built-in supported database. PostgreSQL production deployment support is on the roadmap and is not ready yet.
 
-See [docs/self-hosting.md](docs/self-hosting.md) for Docker Compose, VPS systemd, PostgreSQL, HTTPS, and reverse proxy examples.
+See [docs/self-hosting.md](docs/self-hosting.md) for Docker Compose, VPS systemd, HTTPS, and reverse proxy examples.
 
 ## Screenshots / Demo
 

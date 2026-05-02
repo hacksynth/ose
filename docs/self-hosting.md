@@ -31,14 +31,12 @@ Optional AI variables can be added to `.env` or the Compose environment section.
    - `NEXTAUTH_URL`
    - `NEXTAUTH_SECRET`
    - AI provider keys as needed.
-3. Use PostgreSQL or another network database. Do not use SQLite for serverless production.
+3. OSE currently only supports SQLite. Serverless platforms like Vercel use ephemeral file systems, which are not compatible with SQLite. PostgreSQL support is on the roadmap — Vercel deployment is not recommended until PostgreSQL support is available.
 4. Run Prisma migrations from CI or a trusted machine:
 
 ```bash
 npx prisma migrate deploy
 ```
-
-Vercel works best with PostgreSQL because serverless file systems are ephemeral.
 
 ## VPS Manual Deployment
 
@@ -81,21 +79,9 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now ose
 ```
 
-## PostgreSQL Configuration
+## Database
 
-For production, switch `DATABASE_URL`:
-
-```env
-DATABASE_URL="postgresql://ose:strong-password@localhost:5432/ose"
-```
-
-Then run:
-
-```bash
-npx prisma migrate deploy
-```
-
-If you migrate from SQLite, export and import application data carefully. Prisma migrations define schema, not automatic cross-database data transfer.
+OSE currently ships with SQLite as the built-in supported database. The `DATABASE_URL` for all deployment modes should point to a SQLite file (e.g. `file:/data/ose.db`). PostgreSQL production deployment support is on the roadmap and is not available in the current version.
 
 ## HTTPS and Reverse Proxy
 

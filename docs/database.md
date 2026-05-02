@@ -19,21 +19,11 @@ npx prisma db seed
 
 SQLite is simple and works well for local development, demos, and the desktop app.
 
-## PostgreSQL for Production
+## PostgreSQL Support (Roadmap)
 
-Recommended production configuration:
+OSE currently ships with SQLite as the only supported database. The Prisma schema and all migrations are SQLite-specific. Setting a `postgresql://` `DATABASE_URL` will fail against the current schema and migrations.
 
-```env
-DATABASE_URL="postgresql://ose:strong-password@localhost:5432/ose"
-```
-
-Apply migrations:
-
-```bash
-npx prisma migrate deploy
-```
-
-PostgreSQL is recommended for multi-user deployments, backups, monitoring, and horizontal scaling.
+PostgreSQL production deployment support is on the roadmap and is not ready yet. Do not set a `postgresql://` connection string until this support is implemented.
 
 ## Prisma Commands
 
@@ -51,12 +41,6 @@ SQLite:
 
 ```bash
 sqlite3 ose.db ".backup ose-$(date +%F).db"
-```
-
-PostgreSQL:
-
-```bash
-pg_dump "$DATABASE_URL" > ose-$(date +%F).sql
 ```
 
 ## Migrations
