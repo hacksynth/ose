@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { parseFiniteDate } from '@/lib/validate';
+import { invalidateLearningAnalysis } from '@/lib/ai/context-cache';
 
 export async function GET() {
   const session = await auth();
@@ -49,5 +50,8 @@ export async function PATCH(request: Request) {
     data,
     select: { id: true, name: true, email: true, targetExamDate: true, createdAt: true },
   });
+  if ('targetExamDate' in data) {
+    invalidateLearningAnalysis(session.user.id);
+  }
   return NextResponse.json({ user, message });
 }

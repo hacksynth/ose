@@ -4,10 +4,10 @@ const CLEANUP_INTERVAL_MS = 5 * 60_000;
 
 type CacheEntry<T> = { value: T; expiresAt: number };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const analysisCache = new Map<string, CacheEntry<any>>();
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const stableCache = new Map<string, CacheEntry<any>>();
+const analysisCache = new Map<string, CacheEntry<unknown>>();
+const stableCache = new Map<string, CacheEntry<unknown>>();
+const inflightAnalysis = new Map<string, Promise<unknown>>();
+const inflightStable = new Map<string, Promise<unknown>>();
 let lastCleanup = 0;
 
 function cleanup(now: number) {
@@ -27,9 +27,21 @@ export async function getOrSetAnalysis<T>(userId: string, compute: () => Promise
   const key = `analysis:${userId}`;
   const cached = analysisCache.get(key) as CacheEntry<T> | undefined;
   if (cached && cached.expiresAt > now) return cached.value;
-  const value = await compute();
-  analysisCache.set(key, { value, expiresAt: now + ANALYSIS_TTL_MS });
-  return value;
+  const existing = inflightAnalysis.get(key) as Promise<T> | undefined;
+  if (existing) return existing;
+  const promise = compute().then(
+    (value) => {
+      analysisCache.set(key, { value, expiresAt: Date.now() + ANALYSIS_TTL_MS });
+      inflightAnalysis.delete(key);
+      return value;
+    },
+    (err: unknown) => {
+      inflightAnalysis.delete(key);
+      throw err;
+    },
+  );
+  inflightAnalysis.set(key, promise);
+  return promise;
 }
 
 export async function getOrSetStable<T>(userId: string, compute: () => Promise<T>): Promise<T> {
@@ -38,9 +50,21 @@ export async function getOrSetStable<T>(userId: string, compute: () => Promise<T
   const key = `stable:${userId}`;
   const cached = stableCache.get(key) as CacheEntry<T> | undefined;
   if (cached && cached.expiresAt > now) return cached.value;
-  const value = await compute();
-  stableCache.set(key, { value, expiresAt: now + STABLE_TTL_MS });
-  return value;
+  const existing = inflightStable.get(key) as Promise<T> | undefined;
+  if (existing) return existing;
+  const promise = compute().then(
+    (value) => {
+      stableCache.set(key, { value, expiresAt: Date.now() + STABLE_TTL_MS });
+      inflightStable.delete(key);
+      return value;
+    },
+    (err: unknown) => {
+      inflightStable.delete(key);
+      throw err;
+    },
+  );
+  inflightStable.set(key, promise);
+  return promise;
 }
 
 export function invalidateLearningAnalysis(userId: string) {
