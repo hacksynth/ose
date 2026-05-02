@@ -8,6 +8,9 @@ on:
       - .dockerignore
       - package*.json
       - next.config.mjs
+      - public/**
+      - data/51cto-seed.json
+      - scripts/docker-start.sh
       - src/**
       - .github/workflows/docker.yml
   push:
@@ -15,13 +18,16 @@ on:
       - main
       - master
     tags:
-      - "v*"
+      - 'v*'
     paths:
       - Dockerfile
       - docker-compose.yml
       - .dockerignore
       - package*.json
       - next.config.mjs
+      - public/**
+      - data/51cto-seed.json
+      - scripts/docker-start.sh
       - src/**
       - .github/workflows/docker.yml
   workflow_dispatch:
@@ -33,6 +39,10 @@ permissions:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+
+concurrency:
+  group: docker-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   docker:

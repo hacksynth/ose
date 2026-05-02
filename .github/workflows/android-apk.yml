@@ -6,6 +6,8 @@ on:
     paths:
       - package*.json
       - next.config.mjs
+      - public/**
+      - data/51cto-seed.json
       - src/**
       - src-tauri/**
       - scripts/**
@@ -15,6 +17,8 @@ on:
     paths:
       - package*.json
       - next.config.mjs
+      - public/**
+      - data/51cto-seed.json
       - src/**
       - src-tauri/**
       - scripts/**
@@ -34,6 +38,10 @@ env:
   ANDROID_NDK_VERSION: 27.0.12077973
   ANDROID_BUILD_TOOLS_VERSION: 35.0.0
   OSE_MOBILE_URL: ${{ vars.OSE_MOBILE_URL || secrets.OSE_MOBILE_URL }}
+
+concurrency:
+  group: android-apk-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-apk:

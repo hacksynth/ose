@@ -1,4 +1,6 @@
-﻿node_modules
+﻿# 本地运行时产物（包括 .env.local、storage/、备份目录）一律不要提交。
+
+node_modules
 .next
 out
 dist
@@ -42,3 +44,7 @@ src-tauri/icons/mipmap-*/
 src-tauri/icons/64x64.png
 src-tauri/icons/android/
 src-tauri/icons/ios/
+
+# Runtime data — never commit
+/ose-data-*/
+/restore-backups/
