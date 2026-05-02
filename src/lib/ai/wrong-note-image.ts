@@ -22,10 +22,10 @@ import {
   getWrongNoteImageStyleAnchor,
   type WrongNoteImageStyleAnchor,
 } from '@/lib/ai/wrong-note-image-style-anchors';
-import { normalizeErrorMessage } from '@/lib/ai/utils';
+import { extractImageUrls, normalizeErrorMessage } from '@/lib/ai/utils';
 import { prisma } from '@/lib/prisma';
 
-export const WRONG_NOTE_IMAGE_TEMPLATE_VERSION = '2026-04-29-v5-style-anchor-reference';
+export const WRONG_NOTE_IMAGE_TEMPLATE_VERSION = '2026-05-02-v6-vision-support';
 
 type WrongNoteImagePromptResponse = {
   imagePrompt?: string;
@@ -136,6 +136,7 @@ async function getRuntime(userId: string) {
   const imageInfo = imageProvider.getInfo();
   return {
     imageConfig,
+    promptConfig,
     promptProvider,
     imageProvider,
     promptInfo,
@@ -305,6 +306,24 @@ export async function runWrongNoteImageGeneration(generationId: string) {
       generation.wrongNoteId
     );
     const runtime = await getRuntime(generation.userId);
+
+    const allContent = [
+      note.question.content,
+      ...note.question.options.map((o) => o.content),
+    ].join('\n');
+    const imageUrls = extractImageUrls(allContent);
+
+    if (imageUrls.length > 0 && !runtime.promptProvider.supportsVision()) {
+      const { model } = runtime.promptInfo;
+      const visionTested =
+        runtime.promptConfig.visionSupport !== null &&
+        runtime.promptConfig.visionSupport !== undefined;
+      const errorMessage = visionTested
+        ? `当前配置的模型（${model}）不支持视觉输入，无法生成含图错题的讲解图。请在个人中心切换支持视觉的模型（如 claude-sonnet-4-6、gpt-4o、gemini-2.5-flash 等）。`
+        : `当前模型（${model}）的视觉能力尚未检测。请前往个人中心点击「测试视觉能力」，确认模型支持视觉输入后再生成含图错题讲解图。`;
+      throw Object.assign(new Error(errorMessage), { status: 422 });
+    }
+
     const imageSize = normalizeImageSize(generation.imageSize);
     const imageQuality = normalizeImageQuality(generation.imageQuality);
     const imageOutputFormat = normalizeImageOutputFormat(generation.imageOutputFormat);
@@ -329,6 +348,7 @@ export async function runWrongNoteImageGeneration(generationId: string) {
 - 生成方式：只输出一个 imagePrompt，由生图模型一次性生成最终错题复盘卡。`,
       maxTokens: 1200,
       temperature: 0.25,
+      ...(imageUrls.length > 0 ? { imageUrls } : {}),
     });
     const imagePrompt = normalizeFinalImagePrompt(
       parseAIJson<WrongNoteImagePromptResponse>(promptRaw),
