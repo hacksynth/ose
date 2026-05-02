@@ -45,17 +45,20 @@ export async function POST(request: Request) {
     const requestedDayNumber = normalizeDayNumber(body.dayNumber);
     if (!planId) return NextResponse.json({ message: '缺少计划 ID' }, { status: 400 });
 
-    const plan = await prisma.studyPlan.findFirst({
-      where: { id: planId, userId },
-      select: {
-        title: true,
-        targetExamDate: true,
-        days: {
-          orderBy: { dayNumber: 'asc' },
-          select: { dayNumber: true, date: true, tasks: true, completed: true },
+    const [plan, planUser] = await Promise.all([
+      prisma.studyPlan.findFirst({
+        where: { id: planId, userId },
+        select: {
+          title: true,
+          targetExamDate: true,
+          days: {
+            orderBy: { dayNumber: 'asc' },
+            select: { dayNumber: true, date: true, tasks: true, completed: true },
+          },
         },
-      },
-    });
+      }),
+      prisma.user.findUnique({ where: { id: userId }, select: { targetExamDate: true } }),
+    ]);
     if (!plan) return NextResponse.json({ message: '计划不存在' }, { status: 404 });
 
     const todayKey = getChinaDateKey(new Date());
@@ -78,7 +81,7 @@ export async function POST(request: Request) {
     ]);
     const userMessage = buildTodayPlanDiagnosisUserMessage({
       planTitle: plan.title,
-      targetExamDate: getChinaDateKey(plan.targetExamDate),
+      targetExamDate: getChinaDateKey(planUser?.targetExamDate ?? plan.targetExamDate),
       dayNumber: day.dayNumber,
       date: getChinaDateKey(day.date),
       completed: day.completed,

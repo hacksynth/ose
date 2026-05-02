@@ -149,8 +149,12 @@ export async function buildLearningKnowledgeBase(userId: string) {
   const todayRange = getTodayRange();
   const todayKey = getChinaDateKey(new Date());
 
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true, targetExamDate: true, createdAt: true },
+  });
+
   const [
-    user,
     analysis,
     activePlan,
     wrongNotes,
@@ -164,11 +168,7 @@ export async function buildLearningKnowledgeBase(userId: string) {
     todayCaseCount,
     todayCaseAnswers,
   ] = await Promise.all([
-    prisma.user.findUnique({
-      where: { id: userId },
-      select: { name: true, targetExamDate: true, createdAt: true },
-    }),
-    getUserAnalysis(userId),
+    getUserAnalysis(userId, user?.targetExamDate),
     prisma.studyPlan.findFirst({
       where: { userId, status: 'ACTIVE' },
       orderBy: { createdAt: 'desc' },

@@ -71,12 +71,15 @@ function daysBetweenChinaKeys(fromKey: string, toKey: string) {
   return Math.round((toMs - fromMs) / 86_400_000);
 }
 
-export function getNextExamCountdown(now = new Date()) {
+export function getNextExamCountdown(now = new Date(), targetDate?: Date | null) {
+  const todayKey = getChinaDateKey(now);
+  if (targetDate) {
+    return { date: targetDate, days: Math.max(0, daysBetweenChinaKeys(todayKey, getChinaDateKey(targetDate))) };
+  }
   const year = Number(new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Shanghai", year: "numeric" }).format(now));
   const candidates = [year, year + 1].flatMap((candidateYear) => [5, 11].map((month) => getThirdSaturday(candidateYear, month)));
   const current = now.getTime();
   const target = candidates.find((date) => date.getTime() >= current) ?? candidates[candidates.length - 1];
-  const todayKey = getChinaDateKey(now);
   const targetKey = getChinaDateKey(target);
   return {
     date: target,

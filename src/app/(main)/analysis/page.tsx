@@ -2,6 +2,7 @@
 import { redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { getUserAnalysis } from '@/lib/analysis';
+import { prisma } from '@/lib/prisma';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { AIDiagnosisButton } from '@/components/ai-diagnosis-button';
@@ -17,7 +18,9 @@ function heat(status: string) {
 export default async function AnalysisPage() {
   const session = await auth();
   if (!session?.user?.id) redirect('/login');
-  const data = await getUserAnalysis(session.user.id);
+  const userId = session.user.id;
+  const pageUser = await prisma.user.findUnique({ where: { id: userId }, select: { targetExamDate: true } });
+  const data = await getUserAnalysis(userId, pageUser?.targetExamDate);
   const maxCount = Math.max(1, ...data.trend.map((day) => day.count));
   return (
     <main className="mx-auto mt-6 max-w-7xl space-y-6 md:mt-8 md:space-y-8">

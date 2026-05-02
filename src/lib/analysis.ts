@@ -103,7 +103,7 @@ function toAnalysis(
   };
 }
 
-export async function getUserAnalysis(userId: string) {
+export async function getUserAnalysis(userId: string, targetExamDate?: Date | null) {
   const trendKeys = getRecentDateKeys(RECENT_TREND_DAYS_ANALYSIS);
   const recent7Keys = new Set(trendKeys.slice(-7));
 
@@ -238,7 +238,7 @@ export async function getUserAnalysis(userId: string) {
       : overallMastery >= MEDIUM_MASTERY_THRESHOLD
         ? '中'
         : '低';
-  const exam = getNextExamCountdown();
+  const exam = getNextExamCountdown(new Date(), targetExamDate);
   const totalWrong = wrongRows.reduce((sum, row) => sum + row._count._all, 0);
   const unmasteredCount = await prisma.wrongNote.count({
     where: { userId, markedMastered: false },
