@@ -54,6 +54,85 @@ npm run tauri:build
 - **Windows extraction**: `tauri:prepare` invokes `%SystemRoot%\System32\tar.exe` (bsdtar) explicitly to avoid GNU tar from Git Bash misinterpreting `C:\` paths as `host:path`. Windows 10 1803+ is required.
 - **SHA-256 verification**: every download is hash-checked against the official `SHASUMS256.txt`. Cached archives that fail verification are deleted and re-downloaded.
 
+## Build Artifact Layout
+
+> **Maintainer note**: The config files look contradictory at first glance — `tauri.conf.json`
+> sets `frontendDist` to `../out`, but `next.config.mjs` uses `standalone` output (not `export`).
+> This is intentional. Read this section before changing either setting.
+
+### Why `frontendDist` points to `../out`
+
+Tauri's build toolchain requires `frontendDist` to point to a directory that exists and contains
+at least one file. It uses this path for packaging validation, not for serving the UI at runtime.
+
+`scripts/prepare-sidecar.js` writes a minimal `out/index.html` placeholder purely to satisfy
+this requirement. **`out/index.html` is not the real application UI.** It displays a
+"Starting OSE..." message that appears briefly while the sidecar starts up; the WebView
+navigates away as soon as the server is ready.
+
+The real desktop UI is served entirely by the local Next.js sidecar process, not from any
+files in `out/`.
+
+### Sidecar artifact layout
+
+`tauri:prepare` assembles a self-contained Next.js server under `src-tauri/binaries/standalone/`,
+which Tauri bundles as a resource alongside the app binary:
+
+```
+src-tauri/binaries/standalone/
+  server.js               ← Next.js standalone server entry point
+  start.js                ← sidecar entry: runs migrations then starts server.js
+  .next/
+    static/               ← compiled client-side assets
+  public/                 ← static public assets
+  src/
+    prisma/
+      schema.prisma
+      migrations/
+  node_modules/
+    @prisma/              ← Prisma engine binaries
+    prisma/               ← Prisma CLI (for migrate deploy)
+  runtime/                ← optional: bundled Node.js binary (BUNDLE_NODE=1 only)
+    node[.exe]
+```
+
+Source of each artifact:
+
+| Directory / file | Source |
+|---|---|
+| `server.js` and app code | `.next/standalone` (Next.js standalone output) |
+| `.next/static` | `.next/static` |
+| `public` | `public/` |
+| Prisma schema + migrations | `src/prisma/` |
+| `@prisma`, `prisma` packages | `node_modules/` |
+| `runtime/node[.exe]` | Downloaded Node.js binary (`BUNDLE_NODE=1`) |
+
+### Startup sequence
+
+At launch the Rust layer and the Node.js sidecar perform the following steps in order:
+
+1. **Rust** picks an unused `127.0.0.1` port.
+2. **Rust** spawns `node start.js` (or `runtime/node start.js` when the bundled runtime is
+   present), passing `PORT`, `HOSTNAME`, `DATABASE_URL`, `AUTH_URL`, and `NODE_ENV` as
+   environment variables.
+3. **`start.js`** runs `prisma migrate deploy` to apply any pending database migrations.
+4. **`start.js`** loads `server.js`, starting the Next.js HTTP server.
+5. **Rust** polls `GET /api/ai/status` (TCP connect + HTTP 200 check) every 300 ms, with a
+   60-second timeout.
+6. **Rust** calls `window.navigate("http://127.0.0.1:<port>")` on the main thread; the WebView
+   loads the real application UI from the sidecar.
+
+### What not to change
+
+> **Do not remove `out/index.html` or point `frontendDist` elsewhere.** Tauri will refuse to
+> build if `frontendDist` points to a missing or empty directory. The placeholder is the only
+> artifact the Tauri packager reads from `out/`; everything else is served by the sidecar.
+
+> **Do not switch `next.config.mjs` `output` to `"export"` for desktop builds.** Export mode
+> produces a static site that cannot run server-side code, API routes, or Prisma queries. The
+> desktop app depends on a live Next.js server process; switching output modes will break the
+> sidecar entirely.
+
 ## Runtime Behavior
 
 In production desktop mode, Tauri:
