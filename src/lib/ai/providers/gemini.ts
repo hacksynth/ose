@@ -1,18 +1,26 @@
 import { GoogleGenAI } from "@google/genai";
 import type { AIConfig, AIProvider, CompletionParams } from "@/lib/ai/types";
-import { getSanitizedEndpoint } from "@/lib/ai/utils";
+import { fetchImageAsBase64, getSanitizedEndpoint } from "@/lib/ai/utils";
 
 const defaultModel = "gemini-2.5-flash";
 const defaultBaseUrl = "https://generativelanguage.googleapis.com";
 
-function buildContents(params: CompletionParams) {
+async function buildContents(params: CompletionParams) {
   if (params.messages?.length) {
     return params.messages.map((message) => ({
       role: message.role === "assistant" ? "model" : "user",
       parts: [{ text: message.content }],
     }));
   }
-  return params.userMessage;
+  if (!params.imageUrls?.length) return params.userMessage;
+
+  const parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = [];
+  for (const url of params.imageUrls) {
+    const result = await fetchImageAsBase64(url);
+    if (result) parts.push({ inlineData: { mimeType: result.mimeType, data: result.base64 } });
+  }
+  parts.push({ text: params.userMessage });
+  return [{ role: "user", parts }];
 }
 
 export function createGeminiProvider(config: AIConfig): AIProvider {
@@ -27,6 +35,7 @@ export function createGeminiProvider(config: AIConfig): AIProvider {
 
   return {
     name: "Gemini",
+    supportsVision: () => true,
     getInfo() {
       return {
         name: "Gemini",
@@ -37,7 +46,7 @@ export function createGeminiProvider(config: AIConfig): AIProvider {
     async createCompletion(params) {
       const response = await getClient().models.generateContent({
         model,
-        contents: buildContents(params),
+        contents: await buildContents(params),
         config: {
           systemInstruction: params.systemPrompt,
           maxOutputTokens: params.maxTokens ?? 1200,
@@ -49,7 +58,7 @@ export function createGeminiProvider(config: AIConfig): AIProvider {
     async *streamCompletion(params) {
       const response = await getClient().models.generateContentStream({
         model,
-        contents: buildContents(params),
+        contents: await buildContents(params),
         config: {
           systemInstruction: params.systemPrompt,
           maxOutputTokens: params.maxTokens ?? 1200,

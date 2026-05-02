@@ -1,8 +1,8 @@
 ﻿import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { getAIProvider, isAIConfigured } from "@/lib/ai";
+import { buildAIProvider, isAIConfigured, resolveAIConfig } from "@/lib/ai";
 import { checkAIRateLimit } from "@/lib/ai/rate-limit";
-import { createAIErrorResponse, streamText } from "@/lib/ai/utils";
+import { createAIErrorResponse, extractImageUrls, streamText } from "@/lib/ai/utils";
 import { EXPLAIN_SYSTEM_PROMPT, buildExplainUserMessage } from "@/lib/ai/prompts";
 import { prisma } from "@/lib/prisma";
 
@@ -20,8 +20,28 @@ export async function POST(request: Request) {
     if (!question) return NextResponse.json({ message: "题目不存在" }, { status: 404 });
     const selected = question.options.find((option) => option.id === userAnswerOptionId);
     const userMessage = buildExplainUserMessage(question, selected?.label ?? "未选择", Boolean(selected?.isCorrect));
-    const provider = await getAIProvider(userId);
-    return streamText(provider.streamCompletion({ systemPrompt: EXPLAIN_SYSTEM_PROMPT, userMessage, maxTokens: 1600, temperature: 0.2 }));
+
+    const allContent = [question.content, ...question.options.map((o) => o.content)].join("\n");
+    const imageUrls = extractImageUrls(allContent);
+
+    const config = await resolveAIConfig(userId);
+    if (!config) return NextResponse.json({ message: "请在个人中心填入 API Key 或设置环境变量以启用 AI" }, { status: 503 });
+    const provider = buildAIProvider(config);
+
+    if (imageUrls.length > 0 && !provider.supportsVision()) {
+      const { model } = provider.getInfo();
+      return NextResponse.json({
+        message: `当前配置的模型（${model}）不支持视觉输入，无法分析题目中的图片。如需对含图题进行 AI 深度讲解，请在个人中心切换支持视觉的模型（如 claude-sonnet-4-5、gpt-4o、gemini-2.5-flash 等）。`,
+      }, { status: 422 });
+    }
+
+    return streamText(provider.streamCompletion({
+      systemPrompt: EXPLAIN_SYSTEM_PROMPT,
+      userMessage,
+      maxTokens: 1600,
+      temperature: 0.2,
+      ...(imageUrls.length > 0 ? { imageUrls } : {}),
+    }));
   } catch (error) {
     return createAIErrorResponse(error);
   }

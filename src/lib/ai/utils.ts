@@ -101,3 +101,40 @@ export function streamText(iterator: AsyncIterable<string>) {
 export function cleanJsonText(text: string) {
   return text.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
 }
+
+export function extractImageUrls(content: string): string[] {
+  const urls: string[] = [];
+  const imgTagRegex = /<img[^>]+src=["']([^"']+)["'][^>]*>/gi;
+  let match;
+  while ((match = imgTagRegex.exec(content)) !== null) {
+    try {
+      const url = new URL(match[1]);
+      if (url.protocol === "http:" || url.protocol === "https:") urls.push(match[1]);
+    } catch { /* skip invalid */ }
+  }
+  const markdownImgRegex = /!\[[^\]]*\]\(([^)\s]+)\)/g;
+  while ((match = markdownImgRegex.exec(content)) !== null) {
+    try {
+      const url = new URL(match[1]);
+      if (url.protocol === "http:" || url.protocol === "https:") urls.push(match[1]);
+    } catch { /* skip invalid */ }
+  }
+  return [...new Set(urls)];
+}
+
+export async function fetchImageAsBase64(url: string): Promise<{ base64: string; mimeType: string } | null> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const response = await fetch(url, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (!response.ok) return null;
+    const contentType = response.headers.get("content-type") ?? "image/jpeg";
+    const mimeType = contentType.split(";")[0].trim() || "image/jpeg";
+    const buffer = await response.arrayBuffer();
+    const base64 = Buffer.from(buffer).toString("base64");
+    return { base64, mimeType };
+  } catch {
+    return null;
+  }
+}

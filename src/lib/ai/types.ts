@@ -9,6 +9,7 @@ export interface CompletionParams {
   messages?: AIMessage[];
   maxTokens?: number;
   temperature?: number;
+  imageUrls?: string[];
 }
 
 export interface AIProviderInfo {
@@ -31,4 +32,5 @@ export interface AIProvider {
   getInfo(): AIProviderInfo;
   createCompletion(params: CompletionParams): Promise<string>;
   streamCompletion(params: CompletionParams): AsyncIterable<string>;
+  supportsVision(): boolean;
 }

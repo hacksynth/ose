@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-import type { ChatCompletionMessageParam } from "openai/resources/chat/completions";
+import type { ChatCompletionContentPart, ChatCompletionMessageParam } from "openai/resources/chat/completions";
 import type { AIConfig, AIProvider, CompletionParams } from "@/lib/ai/types";
 import { getSanitizedEndpoint, normalizeErrorMessage } from "@/lib/ai/utils";
 
@@ -12,9 +12,20 @@ function buildMessages(params: CompletionParams): ChatCompletionMessageParam[] {
       ...params.messages.map((message) => ({ role: message.role, content: message.content }) as ChatCompletionMessageParam),
     ];
   }
+  if (!params.imageUrls?.length) {
+    return [
+      { role: "system", content: params.systemPrompt },
+      { role: "user", content: params.userMessage },
+    ];
+  }
+  const parts: ChatCompletionContentPart[] = params.imageUrls.map((url) => ({
+    type: "image_url" as const,
+    image_url: { url },
+  }));
+  parts.push({ type: "text", text: params.userMessage });
   return [
     { role: "system", content: params.systemPrompt },
-    { role: "user", content: params.userMessage },
+    { role: "user", content: parts },
   ];
 }
 
@@ -40,6 +51,7 @@ export function createCustomProvider(config: AIConfig): AIProvider {
 
   return {
     name: "Custom",
+    supportsVision: () => true,
     getInfo() {
       if (!baseUrl) throw new Error("使用 custom 供应商时必须配置 Base URL");
       return {

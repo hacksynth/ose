@@ -9,7 +9,15 @@ function buildMessages(params: CompletionParams): Anthropic.MessageParam[] {
   if (params.messages?.length) {
     return params.messages.map((message) => ({ role: message.role, content: message.content }));
   }
-  return [{ role: "user", content: params.userMessage }];
+  if (!params.imageUrls?.length) {
+    return [{ role: "user", content: params.userMessage }];
+  }
+  const content: Anthropic.ContentBlockParam[] = params.imageUrls.map((url) => ({
+    type: "image" as const,
+    source: { type: "url" as const, url },
+  }));
+  content.push({ type: "text", text: params.userMessage });
+  return [{ role: "user", content }];
 }
 
 export function createClaudeProvider(config: AIConfig): AIProvider {
@@ -24,6 +32,7 @@ export function createClaudeProvider(config: AIConfig): AIProvider {
 
   return {
     name: "Claude",
+    supportsVision: () => true,
     getInfo() {
       return {
         name: "Claude",
