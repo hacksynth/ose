@@ -5,10 +5,13 @@ use std::{
     net::TcpStream,
     path::PathBuf,
     process::{Child, Command, Stdio},
-    sync::{Arc, Mutex},
+    sync::Mutex,
     thread,
     time::{Duration, Instant},
 };
+
+#[cfg(windows)]
+use std::os::windows::process::CommandExt;
 
 use tauri::{AppHandle, Manager, State, WebviewWindow, WindowEvent};
 
@@ -72,14 +75,20 @@ pub fn run() {
                 let app_handle = app.handle().clone();
                 #[cfg(not(debug_assertions))]
                 #[cfg(not(mobile))]
-                thread::spawn(move || match start_next_server(&app_handle) {
-                    Ok(port) => {
-                        let url = format!("http://127.0.0.1:{port}");
-                        if let Err(error) = window.navigate(url.parse().expect("valid local URL")) {
-                            show_error_page(&window, &format!("加载桌面服务失败：{error}"));
+                thread::spawn(move || {
+                    let result = start_next_server(&app_handle);
+                    // Navigate and eval must happen on the main thread. On Windows
+                    // (WebView2) calling them from a background thread fails silently,
+                    // leaving the window stuck on the "Starting OSE..." placeholder.
+                    let _ = app_handle.run_on_main_thread(move || match result {
+                        Ok(port) => {
+                            let url = format!("http://127.0.0.1:{port}");
+                            if let Err(error) = window.navigate(url.parse().expect("valid local URL")) {
+                                show_error_page(&window, &format!("加载桌面服务失败：{error}"));
+                            }
                         }
-                    }
-                    Err(error) => show_error_page(&window, &error),
+                        Err(error) => show_error_page(&window, &error),
+                    });
                 });
             }
 
@@ -110,8 +119,8 @@ fn start_next_server(app: &AppHandle) -> Result<u16, String> {
     let node_binary = resolve_node_binary(&standalone_dir);
     let using_bundled = node_binary != PathBuf::from("node");
 
-    let mut child = Command::new(&node_binary)
-        .arg(&start_script)
+    let mut cmd = Command::new(&node_binary);
+    cmd.arg(&start_script)
         .current_dir(&standalone_dir)
         .env("PORT", port.to_string())
         .env("HOSTNAME", "127.0.0.1")
@@ -120,18 +129,24 @@ fn start_next_server(app: &AppHandle) -> Result<u16, String> {
         .env("NEXTAUTH_URL", format!("http://127.0.0.1:{port}"))
         .env("NODE_ENV", "production")
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|error| {
-            if using_bundled {
-                format!(
-                    "启动打包的 Node.js 失败：{error}。可执行文件位置：{}",
-                    node_binary.display()
-                )
-            } else {
-                format!("启动 Node.js 失败：{error}。请安装 Node.js 20+ 并加入 PATH，或使用 BUNDLE_NODE=1 重新打包。")
-            }
-        })?;
+        .stderr(Stdio::piped());
+
+    // Prevent a black console window from appearing on Windows. The main app
+    // binary uses windows_subsystem = "windows", so spawned child processes
+    // would otherwise get a new console window allocated automatically.
+    #[cfg(windows)]
+    cmd.creation_flags(0x08000000); // CREATE_NO_WINDOW
+
+    let mut child = cmd.spawn().map_err(|error| {
+        if using_bundled {
+            format!(
+                "启动打包的 Node.js 失败：{error}。可执行文件位置：{}",
+                node_binary.display()
+            )
+        } else {
+            format!("启动 Node.js 失败：{error}。请安装 Node.js 20+ 并加入 PATH，或使用 BUNDLE_NODE=1 重新打包。")
+        }
+    })?;
 
     pipe_process_output(child.stdout.take(), "next:stdout");
     pipe_process_output(child.stderr.take(), "next:stderr");
@@ -261,15 +276,8 @@ where
     T: std::io::Read + Send + 'static,
 {
     if let Some(pipe) = pipe {
-        let ready_seen = Arc::new(Mutex::new(false));
-        let ready_seen_for_thread = Arc::clone(&ready_seen);
         thread::spawn(move || {
             for line in BufReader::new(pipe).lines().map_while(Result::ok) {
-                if line.contains("Ready on") || line.contains("started server") {
-                    if let Ok(mut seen) = ready_seen_for_thread.lock() {
-                        *seen = true;
-                    }
-                }
                 println!("[{label}] {line}");
             }
         });
