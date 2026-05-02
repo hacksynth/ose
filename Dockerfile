@@ -11,7 +11,7 @@ ENV DOCKER_BUILD=1
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npx prisma generate
+RUN npx prisma generate --schema src/prisma/schema.prisma
 RUN npm run build
 RUN mkdir -p /app/seed \
   && DATABASE_URL=file:/app/seed/ose.db npx prisma migrate deploy --schema src/prisma/schema.prisma \

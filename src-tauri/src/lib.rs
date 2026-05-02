@@ -1,6 +1,5 @@
 use std::{
-    env,
-    fs,
+    env, fs,
     io::{BufRead, BufReader, Write},
     net::TcpStream,
     path::PathBuf,
@@ -83,7 +82,9 @@ pub fn run() {
                     let _ = app_handle.run_on_main_thread(move || match result {
                         Ok(port) => {
                             let url = format!("http://127.0.0.1:{port}");
-                            if let Err(error) = window.navigate(url.parse().expect("valid local URL")) {
+                            if let Err(error) =
+                                window.navigate(url.parse().expect("valid local URL"))
+                            {
                                 show_error_page(&window, &format!("加载桌面服务失败：{error}"));
                             }
                         }
@@ -191,7 +192,10 @@ fn start_next_server(app: &AppHandle) -> Result<u16, String> {
             "服务器启动超时，请检查 Node.js、Prisma 或端口占用状态。启动日志：{}",
             log_path.display()
         );
-        log_line(log.as_ref(), "[startup] timeout: server did not become ready within 60s");
+        log_line(
+            log.as_ref(),
+            "[startup] timeout: server did not become ready within 60s",
+        );
         Err(msg)
     }
 }
@@ -270,18 +274,33 @@ fn resolve_standalone_dir(app: &AppHandle) -> Result<PathBuf, String> {
 
     if let Ok(resource_dir) = app.path().resource_dir() {
         candidates.push(resource_dir.join("binaries").join("standalone"));
-        candidates.push(resource_dir.join("resources").join("binaries").join("standalone"));
+        candidates.push(
+            resource_dir
+                .join("resources")
+                .join("binaries")
+                .join("standalone"),
+        );
     }
 
     if let Ok(exe_path) = env::current_exe() {
         if let Some(exe_dir) = exe_path.parent() {
-            candidates.push(exe_dir.join("resources").join("binaries").join("standalone"));
+            candidates.push(
+                exe_dir
+                    .join("resources")
+                    .join("binaries")
+                    .join("standalone"),
+            );
             candidates.push(exe_dir.join("binaries").join("standalone"));
         }
     }
 
     if let Ok(current_dir) = env::current_dir() {
-        candidates.push(current_dir.join("resources").join("binaries").join("standalone"));
+        candidates.push(
+            current_dir
+                .join("resources")
+                .join("binaries")
+                .join("standalone"),
+        );
         candidates.push(current_dir.join("binaries").join("standalone"));
     }
 

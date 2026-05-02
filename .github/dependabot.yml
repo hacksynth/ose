@@ -1,38 +1,42 @@
 version: 2
 updates:
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      interval: "weekly"
+      interval: 'weekly'
     open-pull-requests-limit: 5
+    ignore:
+      - dependency-name: '*'
+        update-types:
+          - 'version-update:semver-major'
     groups:
       nextjs:
         patterns:
-          - "next"
-          - "eslint-config-next"
+          - 'next'
+          - 'eslint-config-next'
       prisma:
         patterns:
-          - "prisma"
-          - "@prisma/*"
+          - 'prisma'
+          - '@prisma/*'
 
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
-      interval: "weekly"
+      interval: 'weekly'
 
-  - package-ecosystem: "docker"
-    directory: "/"
+  - package-ecosystem: 'docker'
+    directory: '/'
     schedule:
-      interval: "weekly"
+      interval: 'weekly'
     open-pull-requests-limit: 3
 
-  - package-ecosystem: "cargo"
-    directory: "/src-tauri"
+  - package-ecosystem: 'cargo'
+    directory: '/src-tauri'
     schedule:
-      interval: "weekly"
+      interval: 'weekly'
     open-pull-requests-limit: 3
     groups:
       tauri:
         patterns:
-          - "tauri"
-          - "tauri-*"
+          - 'tauri'
+          - 'tauri-*'

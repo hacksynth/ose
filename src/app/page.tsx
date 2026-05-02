@@ -8,7 +8,7 @@ import {
   CheckCircle2,
   Clock3,
   Database,
-  Github,
+  ExternalLink,
   GraduationCap,
   Laptop,
   LockKeyhole,
@@ -113,7 +113,7 @@ export default async function HomePage() {
               href={repoUrl}
               className="hidden items-center gap-2 rounded-2xl bg-white px-4 py-2 text-sm font-extrabold text-navy shadow-soft transition hover:bg-primary-soft md:inline-flex"
             >
-              <Github className="h-4 w-4" aria-hidden="true" />
+              <ExternalLink className="h-4 w-4" aria-hidden="true" />
               Star
             </a>
             <Button asChild size="sm">
@@ -146,7 +146,7 @@ export default async function HomePage() {
               <LandingActions />
               <Button asChild variant="secondary" size="lg">
                 <a href={repoUrl}>
-                  <Github className="h-5 w-5" aria-hidden="true" />
+                  <ExternalLink className="h-5 w-5" aria-hidden="true" />
                   查看 GitHub
                 </a>
               </Button>
@@ -280,7 +280,7 @@ export default async function HomePage() {
             </div>
             <Button asChild size="lg">
               <a href={`${repoUrl}/blob/main/CONTRIBUTING.md`}>
-                <Github className="h-5 w-5" aria-hidden="true" />
+                <ExternalLink className="h-5 w-5" aria-hidden="true" />
                 参与贡献
               </a>
             </Button>
