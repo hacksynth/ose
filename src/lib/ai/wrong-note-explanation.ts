@@ -130,12 +130,11 @@ export async function prepareAndRunWrongNoteExplanation(params: {
 
   if (imageUrls.length > 0 && !provider.supportsVision()) {
     const { model } = provider.getInfo();
-    throw Object.assign(
-      new Error(
-        `当前配置的模型（${model}）不支持视觉输入，无法分析题目中的图片。如需对含图题进行 AI 深度讲解，请在个人中心切换支持视觉的模型（如 claude-sonnet-4-5、gpt-4o、gemini-2.5-flash 等）。`
-      ),
-      { status: 422 }
-    );
+    const visionTested = config.visionSupport !== null && config.visionSupport !== undefined;
+    const errorMessage = visionTested
+      ? `当前配置的模型（${model}）不支持视觉输入，无法分析题目中的图片。如需对含图题进行 AI 深度讲解，请在个人中心切换支持视觉的模型（如 claude-sonnet-4-6、gpt-4o、gemini-2.5-flash 等）。`
+      : `当前模型（${model}）的视觉能力尚未检测。请前往个人中心点击「测试视觉能力」，确认模型支持视觉输入后再进行含图题讲解。`;
+    throw Object.assign(new Error(errorMessage), { status: 422 });
   }
 
   const generation = await prisma.aIExplanationGeneration.create({

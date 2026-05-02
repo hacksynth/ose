@@ -61,6 +61,7 @@ export async function resolveAIConfig(userId?: string | null): Promise<AIConfig 
           apiKey: settings?.apiKey ?? undefined,
           model: settings?.model ?? undefined,
           baseUrl: settings?.baseUrl ?? undefined,
+          visionSupport: settings?.visionSupport ?? null,
         };
       }
     }

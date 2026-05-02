@@ -51,7 +51,7 @@ export function createCustomProvider(config: AIConfig): AIProvider {
 
   return {
     name: "Custom",
-    supportsVision: () => true,
+    supportsVision: () => config.visionSupport ?? true,
     getInfo() {
       if (!baseUrl) throw new Error("使用 custom 供应商时必须配置 Base URL");
       return {

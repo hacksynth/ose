@@ -46,6 +46,7 @@ export async function GET() {
     baseUrl: settings?.baseUrl ?? null,
     apiKeyMasked: maskApiKey(settings?.apiKey),
     hasApiKey: Boolean(settings?.apiKey),
+    visionSupport: settings?.visionSupport ?? null,
     imageProvider: settings?.imageProvider ?? null,
     imageModel: settings?.imageModel ?? null,
     imageBaseUrl: settings?.imageBaseUrl ?? null,
@@ -85,6 +86,10 @@ export async function PUT(request: Request) {
   if (provider === 'custom' && !baseUrl) {
     return NextResponse.json({ message: 'custom 供应商必须填写 Base URL' }, { status: 400 });
   }
+
+  const providerChanged = provider !== (existing?.provider ?? '');
+  const modelChanged = model !== (existing?.model ?? '');
+  const nextVisionSupport = providerChanged || modelChanged ? null : (existing?.visionSupport ?? null);
 
   const nextApiKey = clearApiKey
     ? null
@@ -143,6 +148,7 @@ export async function PUT(request: Request) {
       model: model || null,
       baseUrl: baseUrl || null,
       apiKey: nextApiKey,
+      visionSupport: nextVisionSupport,
       imageProvider: imageProvider || null,
       imageModel: imageModel || null,
       imageBaseUrl: imageBaseUrl || null,
@@ -161,6 +167,7 @@ export async function PUT(request: Request) {
       model: model || null,
       baseUrl: baseUrl || null,
       apiKey: nextApiKey,
+      visionSupport: nextVisionSupport,
       imageProvider: imageProvider || null,
       imageModel: imageModel || null,
       imageBaseUrl: imageBaseUrl || null,

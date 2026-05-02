@@ -12,7 +12,10 @@ function isVisionCapableModel(model: string): boolean {
   if (m.includes("gpt-4-turbo")) return true;
   if (m.includes("gpt-4-vision")) return true;
   if (m.includes("gpt-4.5")) return true;
+  if (m.includes("gpt-4.1")) return true;
+  if (/^gpt-5/.test(m)) return true;
   if (/\bo[134][-\s]/.test(m) || m === "o1" || m === "o3" || m === "o4") return true;
+  if (m.includes("o4-mini")) return true;
   return false;
 }
 
@@ -52,7 +55,7 @@ export function createOpenAIProvider(config: AIConfig): AIProvider {
 
   return {
     name: "OpenAI",
-    supportsVision: () => isVisionCapableModel(model),
+    supportsVision: () => config.visionSupport ?? isVisionCapableModel(model),
     getInfo() {
       return {
         name: "OpenAI",

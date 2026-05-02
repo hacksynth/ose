@@ -55,11 +55,16 @@ export async function resolveAIConfigFromRequest(userId: string, body: unknown):
     throw new Error("请先填写或保存 API Key");
   }
 
+  const visionSupport = "visionSupport" in data
+    ? (data.visionSupport === true || data.visionSupport === false ? data.visionSupport : null)
+    : null;
+
   return {
     provider: requestedProvider,
     apiKey: apiKey ?? undefined,
     model,
     baseUrl,
+    visionSupport,
   };
 }
 
@@ -91,6 +96,31 @@ export async function testAIConfig(config: AIConfig) {
     latencyMs: Date.now() - startedAt,
     output: content.trim().slice(0, 120),
   };
+}
+
+// Minimal 1×1 transparent PNG encoded as a data URL for vision smoke tests.
+const VISION_TEST_IMAGE =
+  "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+
+export async function testVisionCapability(config: AIConfig): Promise<{ supportsVision: boolean; latencyMs: number }> {
+  const startedAt = Date.now();
+  const provider = buildAIProvider({
+    ...config,
+    model: config.model || DEFAULT_MODELS[config.provider],
+    visionSupport: null,
+  });
+  try {
+    await provider.createCompletion({
+      systemPrompt: "You are a vision checker. If you can see images, reply with exactly: OK",
+      userMessage: "Reply with OK only.",
+      imageUrls: [VISION_TEST_IMAGE],
+      maxTokens: 12,
+      temperature: 0,
+    });
+    return { supportsVision: true, latencyMs: Date.now() - startedAt };
+  } catch {
+    return { supportsVision: false, latencyMs: Date.now() - startedAt };
+  }
 }
 
 async function listOpenAICompatibleModels(config: AIConfig, fallbackBaseUrl: string | undefined) {

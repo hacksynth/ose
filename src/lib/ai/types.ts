@@ -25,6 +25,7 @@ export interface AIConfig {
   apiKey?: string;
   model?: string;
   baseUrl?: string;
+  visionSupport?: boolean | null;
 }
 
 export interface AIProvider {

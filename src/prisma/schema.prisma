@@ -85,11 +85,12 @@ model User {
 }
 
 model UserAISettings {
-  userId                  String   @id
+  userId                  String    @id
   provider                String?
   model                   String?
   apiKey                  String?
   baseUrl                 String?
+  visionSupport           Boolean?
   imageProvider           String?
   imageModel              String?
   imageApiKey             String?
@@ -101,8 +102,8 @@ model UserAISettings {
   imageRateLimitPerMinute Int?
   imageRateLimitHourly    Int?
   imageRateLimitDaily     Int?
-  updatedAt               DateTime @updatedAt
-  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  updatedAt               DateTime  @updatedAt
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model PasswordResetToken {

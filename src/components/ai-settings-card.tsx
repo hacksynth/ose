@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import Image from 'next/image';
-import { CheckCircle2, ImageIcon, Loader2, RefreshCw, Save, Trash2, Zap } from 'lucide-react';
+import { CheckCircle2, Eye, ImageIcon, Loader2, RefreshCw, Save, Trash2, Zap } from 'lucide-react';
 
 import { useAIStatus } from '@/components/ai-status-context';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ type Settings = {
   baseUrl: string | null;
   apiKeyMasked: string | null;
   hasApiKey: boolean;
+  visionSupport: boolean | null;
   imageProvider: string | null;
   imageModel: string | null;
   imageBaseUrl: string | null;
@@ -50,6 +51,7 @@ const DEFAULT_SETTINGS: Settings = {
   baseUrl: null,
   apiKeyMasked: null,
   hasApiKey: false,
+  visionSupport: null,
   imageProvider: null,
   imageModel: null,
   imageBaseUrl: null,
@@ -98,8 +100,9 @@ export function AISettingsCard() {
   const [loadingImageModels, setLoadingImageModels] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testingImage, setTestingImage] = useState(false);
+  const [testingVision, setTestingVision] = useState(false);
 
-  const busy = loading || saving || loadingModels || loadingImageModels || testing || testingImage;
+  const busy = loading || saving || loadingModels || loadingImageModels || testing || testingImage || testingVision;
   const selectedImageStyle =
     AI_IMAGE_STYLE_OPTIONS.find(
       (option) => option.value === (settings.imageStyle || 'clean_education_card')
@@ -165,6 +168,7 @@ export function AISettingsCard() {
     setModels([]);
     setTestResult(null);
   }, [settings.provider, settings.baseUrl]);
+
 
   useEffect(() => {
     setImageModels([]);
@@ -315,6 +319,38 @@ export function AISettingsCard() {
     }
   }
 
+  async function testVisionCapability() {
+    setTestingVision(true);
+    setMessage(null);
+    try {
+      const response = await fetch('/api/profile/ai-settings/vision-test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(requestPayload),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        setMessage({
+          kind: 'error',
+          text: (data as { message?: string }).message || '视觉能力测试失败',
+        });
+        return;
+      }
+      const result = data as { supportsVision: boolean; latencyMs: number };
+      setSettings((prev) => ({ ...prev, visionSupport: result.supportsVision }));
+      setMessage({
+        kind: result.supportsVision ? 'ok' : 'error',
+        text: result.supportsVision
+          ? `视觉能力测试通过（${result.latencyMs}ms），该模型支持图像输入`
+          : `视觉能力测试未通过（${result.latencyMs}ms），该模型不支持图像输入`,
+      });
+    } catch {
+      setMessage({ kind: 'error', text: '视觉能力测试失败，请检查网络、API Key 或模型名称' });
+    } finally {
+      setTestingVision(false);
+    }
+  }
+
   async function clearConfig() {
     if (!confirm('确认清空个人 AI 配置并回落到服务器环境变量？')) return;
     setSaving(true);
@@ -395,9 +431,23 @@ export function AISettingsCard() {
           </p>
         </div>
       </div>
-      <div className="mt-3 rounded-3xl bg-softRose p-4">
-        <p className="font-black text-muted">当前 Endpoint</p>
-        <p className="mt-2 break-all font-bold text-navy">{status.endpoint ?? '未配置'}</p>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <div className="rounded-3xl bg-softRose p-4">
+          <p className="font-black text-muted">当前 Endpoint</p>
+          <p className="mt-2 break-all font-bold text-navy">{status.endpoint ?? '未配置'}</p>
+        </div>
+        <div className="rounded-3xl bg-white/70 p-4">
+          <p className="font-black text-muted">视觉能力</p>
+          <div className="mt-2 flex items-center gap-2">
+            {settings.visionSupport === true ? (
+              <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-bold text-green-800">支持视觉</span>
+            ) : settings.visionSupport === false ? (
+              <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-bold text-red-700">不支持视觉</span>
+            ) : (
+              <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-bold text-gray-600">未检测</span>
+            )}
+          </div>
+        </div>
       </div>
 
       <form onSubmit={onSubmit} className="mt-6 space-y-4">
@@ -415,7 +465,7 @@ export function AISettingsCard() {
               options={PROVIDERS}
               disabled={busy}
               onChange={(provider) =>
-                setSettings((prev) => ({ ...prev, provider: provider || null }))
+                setSettings((prev) => ({ ...prev, provider: provider || null, visionSupport: null }))
               }
             />
           </div>
@@ -427,7 +477,7 @@ export function AISettingsCard() {
                 list="ai-model-options"
                 value={settings.model ?? ''}
                 onChange={(event) =>
-                  setSettings((prev) => ({ ...prev, model: event.target.value }))
+                  setSettings((prev) => ({ ...prev, model: event.target.value, visionSupport: null }))
                 }
                 placeholder="留空使用默认值，例如 gpt-4o-mini"
                 disabled={busy}
@@ -748,6 +798,14 @@ export function AISettingsCard() {
           <Button type="button" variant="secondary" onClick={testConnection} disabled={busy}>
             {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
             测试文本模型
+          </Button>
+          <Button type="button" variant="secondary" onClick={testVisionCapability} disabled={busy}>
+            {testingVision ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+            测试视觉能力
           </Button>
           <Button type="button" variant="secondary" onClick={testImageConnection} disabled={busy}>
             {testingImage ? (

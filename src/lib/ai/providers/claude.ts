@@ -5,6 +5,12 @@ import { getSanitizedEndpoint } from "@/lib/ai/utils";
 const defaultBaseUrl = "https://api.anthropic.com";
 const defaultModel = "claude-sonnet-4-5-20250929";
 
+function parseDataUrl(url: string): { mediaType: "image/jpeg" | "image/png" | "image/gif" | "image/webp"; data: string } | null {
+  const match = url.match(/^data:(image\/(?:jpeg|png|gif|webp));base64,(.+)$/);
+  if (!match) return null;
+  return { mediaType: match[1] as "image/jpeg" | "image/png" | "image/gif" | "image/webp", data: match[2] };
+}
+
 function buildMessages(params: CompletionParams): Anthropic.MessageParam[] {
   if (params.messages?.length) {
     return params.messages.map((message) => ({ role: message.role, content: message.content }));
@@ -12,10 +18,19 @@ function buildMessages(params: CompletionParams): Anthropic.MessageParam[] {
   if (!params.imageUrls?.length) {
     return [{ role: "user", content: params.userMessage }];
   }
-  const content: Anthropic.ContentBlockParam[] = params.imageUrls.map((url) => ({
-    type: "image" as const,
-    source: { type: "url" as const, url },
-  }));
+  const content: Anthropic.ContentBlockParam[] = params.imageUrls.map((url) => {
+    const parsed = parseDataUrl(url);
+    if (parsed) {
+      return {
+        type: "image" as const,
+        source: { type: "base64" as const, media_type: parsed.mediaType, data: parsed.data },
+      };
+    }
+    return {
+      type: "image" as const,
+      source: { type: "url" as const, url },
+    };
+  });
   content.push({ type: "text", text: params.userMessage });
   return [{ role: "user", content }];
 }

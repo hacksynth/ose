@@ -5,6 +5,12 @@ import { fetchImageAsBase64, getSanitizedEndpoint } from "@/lib/ai/utils";
 const defaultModel = "gemini-2.5-flash";
 const defaultBaseUrl = "https://generativelanguage.googleapis.com";
 
+function parseDataUrl(url: string): { mimeType: string; base64: string } | null {
+  const match = url.match(/^data:(image\/[a-z+]+);base64,(.+)$/);
+  if (!match) return null;
+  return { mimeType: match[1], base64: match[2] };
+}
+
 async function buildContents(params: CompletionParams) {
   if (params.messages?.length) {
     return params.messages.map((message) => ({
@@ -16,8 +22,13 @@ async function buildContents(params: CompletionParams) {
 
   const parts: Array<{ text?: string; inlineData?: { mimeType: string; data: string } }> = [];
   for (const url of params.imageUrls) {
-    const result = await fetchImageAsBase64(url);
-    if (result) parts.push({ inlineData: { mimeType: result.mimeType, data: result.base64 } });
+    const parsed = parseDataUrl(url);
+    if (parsed) {
+      parts.push({ inlineData: { mimeType: parsed.mimeType, data: parsed.base64 } });
+    } else {
+      const result = await fetchImageAsBase64(url);
+      if (result) parts.push({ inlineData: { mimeType: result.mimeType, data: result.base64 } });
+    }
   }
   parts.push({ text: params.userMessage });
   return [{ role: "user", parts }];
