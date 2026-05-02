@@ -47,7 +47,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
 
       - name: Setup Rust
@@ -166,7 +166,7 @@ jobs:
           OSE Windows Portable
 
           1. Keep OSE.exe, portable.ini, and the resources directory together.
-          2. Node.js 20+ must be installed and available in PATH.
+          2. Node.js 22+ must be installed and available in PATH.
           3. User data is stored in the system app data directory.
           4. The bundled Next.js standalone server lives in resources/binaries/standalone.
           "@ | Set-Content -Path (Join-Path $portableDir 'README.txt') -Encoding UTF8
@@ -265,7 +265,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
 
       - name: Setup Java
@@ -399,5 +399,5 @@ jobs:
             - Linux: `OSE-${{ github.ref_name }}-Linux-x86_64.AppImage`, `.deb`, or `.rpm`
             - Android: `OSE-${{ github.ref_name }}-Android.apk`
 
-            Windows portable builds require Node.js 20+ in PATH because the Next.js standalone server is launched locally.
+            Windows portable builds require Node.js 22+ in PATH because the Next.js standalone server is launched locally.
           files: release-assets/*

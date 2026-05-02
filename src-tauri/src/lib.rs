@@ -163,7 +163,7 @@ fn start_next_server(app: &AppHandle) -> Result<u16, String> {
                 node_binary.display()
             )
         } else {
-            format!("启动 Node.js 失败：{error}。请安装 Node.js 20+ 并加入 PATH，或使用 BUNDLE_NODE=1 重新打包。")
+            format!("启动 Node.js 失败：{error}。请安装 Node.js 22+ 并加入 PATH，或使用 BUNDLE_NODE=1 重新打包。")
         };
         log_line(log.as_ref(), &format!("[startup] spawn error: {msg}"));
         msg

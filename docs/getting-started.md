@@ -4,7 +4,7 @@ This guide walks you from a clean machine to a running OSE development server.
 
 ## Prerequisites
 
-- Node.js 18+; Node.js 20 is recommended.
+- Node.js 20+; Node.js 22 LTS is recommended.
 - npm 10+.
 - Git.
 - Optional: Rust and the Tauri prerequisites if you want to build the desktop app.

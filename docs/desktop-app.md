@@ -4,7 +4,7 @@ OSE uses Tauri for desktop packaging on Windows, Linux, and macOS.
 
 ## Prerequisites
 
-- Node.js 20 (build host).
+- Node.js 22 LTS (build host).
 - npm.
 - Rust toolchain.
 - Tauri system dependencies for your platform.
@@ -36,14 +36,14 @@ npm run tauri:build
 
 ### Bundling Node.js (no system Node.js required at runtime)
 
-By default the desktop installer relies on the user having Node.js 20+ on `PATH`. To produce a self-contained installer that ships its own Node.js:
+By default the desktop installer relies on the user having Node.js 22+ on `PATH`. To produce a self-contained installer that ships its own Node.js:
 
 ```bash
 BUNDLE_NODE=1 npm run tauri:prepare
 npm run tauri:build
 ```
 
-`BUNDLE_NODE=1` downloads the official Node.js binary for the build host's platform/architecture and places it under `src-tauri/binaries/standalone/runtime/`. The Tauri app prefers this binary over `PATH` at runtime. Override the version with `BUNDLED_NODE_VERSION=v20.18.1` (or any other Node.js dist tag) if needed.
+`BUNDLE_NODE=1` downloads the official Node.js binary for the build host's platform/architecture and places it under `src-tauri/binaries/standalone/runtime/`. The Tauri app prefers this binary over `PATH` at runtime. Override the version with `BUNDLED_NODE_VERSION=v22.15.0` (or any other Node.js dist tag) if needed.
 
 > **Cross-compilation note**: the bundled Node.js matches the build host. To ship for a different OS/arch, run `tauri:prepare` on that platform (e.g. via CI matrix builds).
 

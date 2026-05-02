@@ -40,7 +40,7 @@ npx prisma migrate deploy
 
 ## VPS Manual Deployment
 
-Install Node.js 20, clone the repository, then:
+Install Node.js 22 LTS, clone the repository, then:
 
 ```bash
 npm ci
