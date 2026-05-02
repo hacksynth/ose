@@ -11,7 +11,7 @@
 | `scripts/split-51cto-exams.py`     | 一次性脚本:从 MCP 工具结果拆分到上述 42 个 JSON                   |
 | `scripts/convert-51cto-to-seed.py` | 把原始 JSON 转换为 OSE schema 形式的 seed                         |
 | `data/51cto-seed.json`             | OSE 形式的 seed(41 套真题,1579 个 Question 行,96 个 CaseScenario) |
-| `src/prisma/seed-51cto.ts`         | Prisma 加载脚本:`tsx src/prisma/seed-51cto.ts`                    |
+| `src/prisma/seed.ts`               | Prisma 加载脚本（`npm run db:seed` 入口）                         |
 
 ## 转换规则要点(详见 `data/51cto-seed.json#metadata`)
 
