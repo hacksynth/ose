@@ -1,3 +1,4 @@
+use base64::Engine as _;
 use std::{
     env, fs,
     io::{BufRead, BufReader, Write},
@@ -122,6 +123,7 @@ fn start_next_server(app: &AppHandle) -> Result<u16, String> {
         ));
     }
 
+    let auth_secret = resolve_or_create_auth_secret(&data_dir)?;
     let port = pick_port()?;
     let database_path = data_dir.join("ose.db");
     let database_url = format!("file:{}", database_path.to_string_lossy());
@@ -144,6 +146,8 @@ fn start_next_server(app: &AppHandle) -> Result<u16, String> {
         .env("PORT", port.to_string())
         .env("HOSTNAME", "127.0.0.1")
         .env("DATABASE_URL", database_url)
+        .env("AUTH_SECRET", &auth_secret)
+        .env("NEXTAUTH_SECRET", &auth_secret)
         .env("AUTH_URL", format!("http://127.0.0.1:{port}"))
         .env("NEXTAUTH_URL", format!("http://127.0.0.1:{port}"))
         .env("NODE_ENV", "production")
@@ -368,6 +372,56 @@ where
             }
         });
     }
+}
+
+fn resolve_or_create_auth_secret(data_dir: &PathBuf) -> Result<String, String> {
+    let secret_path = data_dir.join("auth.secret");
+
+    if secret_path.exists() {
+        let content = fs::read_to_string(&secret_path)
+            .map_err(|e| format!("读取 auth.secret 失败：{e}"))?;
+        let trimmed = content.trim().to_string();
+        if !trimmed.is_empty() {
+            return Ok(trimmed);
+        }
+        // Empty file — fall through and generate a fresh secret.
+    }
+
+    let mut bytes = [0u8; 32];
+    getrandom::getrandom(&mut bytes).map_err(|e| format!("生成随机 secret 失败：{e}"))?;
+    let secret = base64::engine::general_purpose::STANDARD.encode(bytes);
+    write_secret_atomic(&secret_path, &secret)?;
+    Ok(secret)
+}
+
+#[cfg(unix)]
+fn create_secret_file(path: &std::path::Path) -> Result<fs::File, std::io::Error> {
+    use std::os::unix::fs::OpenOptionsExt;
+    fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .mode(0o600)
+        .open(path)
+}
+
+#[cfg(not(unix))]
+fn create_secret_file(path: &std::path::Path) -> Result<fs::File, std::io::Error> {
+    fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(path)
+}
+
+fn write_secret_atomic(secret_path: &PathBuf, secret: &str) -> Result<(), String> {
+    let tmp_path = secret_path.with_file_name("auth.secret.tmp");
+    // Remove any leftover temp file so create_new(true) can succeed.
+    let _ = fs::remove_file(&tmp_path);
+    let mut file = create_secret_file(&tmp_path)
+        .map_err(|e| format!("创建临时 secret 文件失败：{e}"))?;
+    file.write_all(secret.as_bytes())
+        .map_err(|e| format!("写入 secret 失败：{e}"))?;
+    drop(file);
+    fs::rename(&tmp_path, secret_path).map_err(|e| format!("移动 secret 文件失败：{e}"))
 }
 
 fn show_error_page(window: &WebviewWindow, message: &str) {

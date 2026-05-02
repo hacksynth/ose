@@ -61,9 +61,43 @@ In production desktop mode, Tauri:
 1. Selects an available local port.
 2. Creates an app data directory.
 3. Sets `DATABASE_URL` to the local SQLite database.
-4. Starts `node start.js` — preferring the bundled `runtime/node[.exe]` when present, otherwise `node` from `PATH`.
-5. Polls `/api/ai/status` until the Next.js server is ready.
-6. Navigates the WebView to `http://127.0.0.1:<port>`.
+4. Resolves or generates a per-install auth secret (see [Auth Secret](#auth-secret) below).
+5. Starts `node start.js` — preferring the bundled `runtime/node[.exe]` when present, otherwise `node` from `PATH`.
+6. Polls `/api/ai/status` until the Next.js server is ready.
+7. Navigates the WebView to `http://127.0.0.1:<port>`.
+
+## Auth Secret
+
+Each desktop installation generates a unique auth secret on first launch. The secret is used to sign Auth.js / NextAuth session tokens and is never shared between installs.
+
+### Storage location
+
+The secret is stored in a file named `auth.secret` inside the app data directory:
+
+- **Windows**: `%AppData%\com.ose.softwareexam\auth.secret`
+- **macOS**: `~/Library/Application Support/com.ose.softwareexam/auth.secret`
+- **Linux**: `~/.local/share/com.ose.softwareexam/auth.secret`
+
+### Format and permissions
+
+The file contains a 44-character Base64 string derived from 32 cryptographically random bytes. On Unix-like systems the file is created with `0600` (owner read/write only) permissions set at creation time, with no intermediate world-readable state.
+
+### Secret reuse across restarts
+
+On subsequent launches the app reads the existing `auth.secret` file and reuses the value. If the file is missing or empty, a new secret is generated automatically.
+
+### Impact of deleting the file
+
+Deleting `auth.secret` causes a new secret to be generated on the next launch. All existing sessions become invalid (users are signed out), but no study data is lost.
+
+### Development mode
+
+For `tauri dev`, `AUTH_SECRET` and `NEXTAUTH_SECRET` are **not** injected automatically. Set them in a local `.env.local` file (which is gitignored):
+
+```env
+AUTH_SECRET=any-local-dev-value
+NEXTAUTH_SECRET=any-local-dev-value
+```
 
 ## Portable Zip (Windows)
 
