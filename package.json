@@ -68,7 +68,7 @@
     ]
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.91.0",
+    "@anthropic-ai/sdk": "^0.92.0",
     "@auth/prisma-adapter": "^2.11.2",
     "@google/genai": "^1.50.1",
     "@prisma/client": "^6.19.3",
