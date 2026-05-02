@@ -54,8 +54,8 @@ git clone https://github.com/hacksynth/ose.git
 cd ose
 cp .env.example .env
 npm install
-npx prisma migrate dev
-npx prisma db seed
+npm run db:migrate
+npm run db:seed
 npm run dev
 ```
 

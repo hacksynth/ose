@@ -13,8 +13,8 @@ DATABASE_URL="file:./dev.db"
 Initialize:
 
 ```bash
-npx prisma migrate dev
-npx prisma db seed
+npm run db:migrate
+npm run db:seed
 ```
 
 SQLite is simple and works well for local development, demos, and the desktop app.
@@ -39,9 +39,9 @@ PostgreSQL is recommended for multi-user deployments, backups, monitoring, and h
 
 ```bash
 npx prisma generate
-npx prisma migrate dev
+npm run db:migrate
 npx prisma migrate deploy
-npx prisma db seed
+npm run db:seed
 npx prisma studio
 ```
 
