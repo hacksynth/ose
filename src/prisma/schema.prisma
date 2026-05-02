@@ -274,6 +274,8 @@ model WrongNote {
 
   @@unique([userId, questionId])
   @@index([userId, markedMastered])
+  @@index([userId, markedMastered, updatedAt])
+  @@index([userId, updatedAt])
   @@index([questionId])
   @@index([createdAt])
 }
@@ -307,6 +309,9 @@ model AIImageGeneration {
   wrongNote         WrongNote?              @relation(fields: [wrongNoteId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
+  @@index([userId, updatedAt])
+  @@index([userId, status, updatedAt])
+  @@index([userId, wrongNoteId, updatedAt])
   @@index([questionId])
   @@index([wrongNoteId, status, createdAt])
   @@index([fingerprint])
@@ -331,6 +336,7 @@ model AIExplanationGeneration {
   wrongNote     WrongNote?          @relation(fields: [wrongNoteId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
+  @@index([userId, wrongNoteId, updatedAt])
   @@index([questionId])
   @@index([wrongNoteId, status, createdAt])
 }
@@ -459,6 +465,7 @@ model StudyPlan {
   days           StudyPlanDay[]
 
   @@index([userId, status])
+  @@index([userId, createdAt])
   @@index([targetExamDate])
 }
 

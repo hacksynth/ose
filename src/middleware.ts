@@ -10,6 +10,7 @@ const protectedRoutes = [
   '/plan',
   '/knowledge',
   '/analysis',
+  '/tasks',
 ];
 const authRoutes = ['/login', '/register', '/reset-password'];
 
@@ -43,6 +44,7 @@ export const config = {
     '/plan/:path*',
     '/knowledge/:path*',
     '/analysis/:path*',
+    '/tasks/:path*',
     '/login',
     '/register',
     '/reset-password/:path*',

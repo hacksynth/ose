@@ -58,11 +58,12 @@ function normalizeSession(value: unknown): ChatSession | null {
   };
 }
 
-export function AIAssistant() {
-  const [open, setOpen] = useState(false);
+export function AIAssistant({ defaultOpen = false }: { defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
   const [maximized, setMaximized] = useState(false);
   const status = useAIStatus();
   const [sessions, setSessions] = useState<ChatSession[]>([]);
+  const [sessionsLoaded, setSessionsLoaded] = useState(false);
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [input, setInput] = useState('');
@@ -98,6 +99,7 @@ export function AIAssistant() {
   });
 
   useEffect(() => {
+    if (!open || sessionsLoaded) return;
     let active = true;
     async function loadSessions() {
       const response = await fetch('/api/ai/chat/sessions').catch(() => null);
@@ -110,6 +112,7 @@ export function AIAssistant() {
         : [];
       if (!active) return;
       setSessions(nextSessions);
+      setSessionsLoaded(true);
       const latest = nextSessions[0];
       if (latest) {
         setActiveSessionId(latest.id);
@@ -120,7 +123,7 @@ export function AIAssistant() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [open, sessionsLoaded]);
 
   async function saveSession(
     nextMessages: Message[],

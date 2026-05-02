@@ -1,5 +1,3 @@
-import { runWrongNoteImageGeneration } from '@/lib/ai/wrong-note-image';
-
 type QueueState = {
   queue: string[];
   queuedIds: Set<string>;
@@ -39,7 +37,8 @@ function schedule() {
     state.queuedIds.delete(generationId);
     state.activeIds.add(generationId);
     state.active += 1;
-    void runWrongNoteImageGeneration(generationId)
+    void import('@/lib/ai/wrong-note-image')
+      .then(({ runWrongNoteImageGeneration }) => runWrongNoteImageGeneration(generationId))
       .catch(() => undefined)
       .finally(() => {
         state.active -= 1;

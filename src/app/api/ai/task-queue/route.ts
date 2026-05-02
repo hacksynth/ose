@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { auth } from '@/lib/auth';
 import { getWrongNoteImageQueueStats } from '@/lib/ai/wrong-note-image-queue';
-import { imageUrlFor } from '@/lib/ai/wrong-note-image';
+import { imageUrlFor } from '@/lib/ai/image-url';
 import { prisma } from '@/lib/prisma';
 import { clampInt } from '@/lib/validate';
 

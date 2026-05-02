@@ -24,6 +24,7 @@ import {
 } from '@/lib/ai/wrong-note-image-style-anchors';
 import { extractImageUrls, normalizeErrorMessage } from '@/lib/ai/utils';
 import { prisma } from '@/lib/prisma';
+import { imageUrlFor } from '@/lib/ai/image-url';
 
 export const WRONG_NOTE_IMAGE_TEMPLATE_VERSION = '2026-05-02-v6-vision-support';
 
@@ -67,9 +68,7 @@ type GenerationForSerialization = {
   errorMessage: string | null;
 };
 
-export function imageUrlFor(generation: { id: string; updatedAt: Date }) {
-  return `/api/ai/wrong-note-image/${generation.id}/file?v=${generation.updatedAt.getTime()}`;
-}
+export { imageUrlFor };
 
 export function serializeImageGeneration(
   generation: GenerationForSerialization
@@ -307,10 +306,9 @@ export async function runWrongNoteImageGeneration(generationId: string) {
     );
     const runtime = await getRuntime(generation.userId);
 
-    const allContent = [
-      note.question.content,
-      ...note.question.options.map((o) => o.content),
-    ].join('\n');
+    const allContent = [note.question.content, ...note.question.options.map((o) => o.content)].join(
+      '\n'
+    );
     const imageUrls = extractImageUrls(allContent);
 
     if (imageUrls.length > 0 && !runtime.promptProvider.supportsVision()) {

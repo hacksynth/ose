@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { clampInt } from '@/lib/validate';
 import { getDescendantTopicIds } from '@/lib/knowledge-stats';
 import { PAGE_SIZE_DEFAULT, PAGE_SIZE_MAX } from '@/lib/constants';
-import { imageUrlFor } from '@/lib/ai/wrong-note-image';
+import { imageUrlFor } from '@/lib/ai/image-url';
 
 function getStatusFilter(status: string | null) {
   if (status === 'mastered') return { markedMastered: true };
