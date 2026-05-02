@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { invalidateLearningStable } from "@/lib/ai/context-cache";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string; dayNumber: string }> }) {
   const session = await auth();
@@ -21,5 +22,6 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       ...(notes !== undefined ? { notes } : {}),
     },
   });
+  invalidateLearningStable(session.user.id);
   return NextResponse.json({ day });
 }

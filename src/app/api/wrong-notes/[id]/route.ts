@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { invalidateLearning } from "@/lib/ai/context-cache";
 
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -20,6 +21,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       ...(trimmedNote !== undefined ? { note: trimmedNote } : {}),
     },
   });
+  invalidateLearning(session.user.id);
   return NextResponse.json({ item: updated, message: "错题状态已更新" });
 }
 
@@ -29,5 +31,6 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   const { id } = await params;
   const result = await prisma.wrongNote.deleteMany({ where: { id, userId: session.user.id } });
   if (result.count === 0) return NextResponse.json({ message: "错题不存在" }, { status: 404 });
+  invalidateLearning(session.user.id);
   return NextResponse.json({ message: "已从错题本移除" });
 }

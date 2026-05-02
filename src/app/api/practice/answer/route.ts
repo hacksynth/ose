@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { invalidateLearning } from "@/lib/ai/context-cache";
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -61,6 +62,8 @@ export async function POST(request: Request) {
     }
     return created;
   });
+
+  invalidateLearning(userId);
 
   return NextResponse.json({
     answerId: answer.id,

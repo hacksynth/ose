@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { gradeCaseLocal, gradeCaseWithAI } from "@/lib/grade";
+import { invalidateLearning } from "@/lib/ai/context-cache";
 
 type CaseAnswerMap = Record<string, string>;
 
@@ -126,6 +127,8 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
       }
     }
   });
+
+  invalidateLearning(userId);
 
   return NextResponse.json({ totalScore, choiceScore, caseScore });
 }

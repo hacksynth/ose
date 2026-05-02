@@ -8,6 +8,7 @@ import { STUDY_PLAN_SYSTEM_PROMPT, buildStudyPlanUserMessage } from "@/lib/ai/pr
 import { getUserAnalysis } from "@/lib/analysis";
 import { prisma } from "@/lib/prisma";
 import { parseFiniteDate } from "@/lib/validate";
+import { invalidateLearningStable } from "@/lib/ai/context-cache";
 
 const MAX_PLAN_DAYS = 60;
 
@@ -99,6 +100,7 @@ export async function POST(request: Request) {
         },
       }),
     );
+    invalidateLearningStable(userId);
     return NextResponse.json({ planId: plan.id, content: overviewContent });
   } catch (error) {
     return createAIErrorResponse(error);

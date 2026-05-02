@@ -1,17 +1,21 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { buildLearningKnowledgeBase } from '@/lib/ai/learning-context';
+import { invalidateLearning } from '@/lib/ai/context-cache';
 import { prisma } from '@/lib/prisma';
 import { createTestUser, resetUserData } from '@/test/helpers';
 
+const TEST_USER_ID = 'learning-context-user';
+
 describe('buildLearningKnowledgeBase', () => {
   beforeEach(async () => {
+    invalidateLearning(TEST_USER_ID);
     await resetUserData();
   });
 
   it('includes today wrong choice details with selected and correct answers', async () => {
     const user = await createTestUser({
-      id: 'learning-context-user',
+      id: TEST_USER_ID,
       email: 'learning-context@example.com',
     });
     const wrongOption = await prisma.questionOption.findUniqueOrThrow({

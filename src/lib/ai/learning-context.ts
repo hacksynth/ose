@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { getUserAnalysis } from '@/lib/analysis';
 import { getChinaDateKey, getTodayRange } from '@/lib/stats';
+import { getOrSetAnalysis, getOrSetStable } from '@/lib/ai/context-cache';
 
 const MAX_CONTEXT_CHARS = 18_000;
 const MAX_TODAY_CHOICE_DETAILS = 80;
@@ -145,30 +146,8 @@ function formatWrongChoiceDetail(answer: ChoiceAnswerDetail, index: number) {
 题库解析：${compactText(answer.question.explanation, MAX_TEXT_CHARS.explanation)}`;
 }
 
-export async function buildLearningKnowledgeBase(userId: string) {
-  const todayRange = getTodayRange();
-  const todayKey = getChinaDateKey(new Date());
-
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { name: true, targetExamDate: true, createdAt: true },
-  });
-
-  const [
-    analysis,
-    activePlan,
-    wrongNotes,
-    recentExams,
-    todayPracticeChoiceCount,
-    todayPracticeWrongCount,
-    todayExamChoiceCount,
-    todayExamWrongCount,
-    todayPracticeAnswers,
-    todayExamAnswers,
-    todayCaseCount,
-    todayCaseAnswers,
-  ] = await Promise.all([
-    getUserAnalysis(userId, user?.targetExamDate),
+async function fetchStableData(userId: string) {
+  const [activePlan, wrongNotes, recentExams] = await Promise.all([
     prisma.studyPlan.findFirst({
       where: { userId, status: 'ACTIVE' },
       orderBy: { createdAt: 'desc' },
@@ -231,6 +210,39 @@ export async function buildLearningKnowledgeBase(userId: string) {
         exam: { select: { title: true, totalScore: true } },
       },
     }),
+  ]);
+
+  const wrongQuestionIds = wrongNotes.map((note) => note.questionId);
+  const examWrongAnswers = wrongQuestionIds.length
+    ? await prisma.examAnswer.findMany({
+        where: {
+          questionId: { in: wrongQuestionIds },
+          selectedOptionId: { not: null },
+          isCorrect: false,
+          examAttempt: { userId, status: 'COMPLETED' },
+        },
+        select: {
+          questionId: true,
+          selectedOption: { select: { id: true, label: true, content: true } },
+          examAttempt: { select: { finishedAt: true, startedAt: true } },
+        },
+      })
+    : [];
+
+  return { activePlan, wrongNotes, recentExams, examWrongAnswers };
+}
+
+async function fetchTodayData(userId: string, todayRange: { start: Date; end: Date }) {
+  const [
+    todayPracticeChoiceCount,
+    todayPracticeWrongCount,
+    todayExamChoiceCount,
+    todayExamWrongCount,
+    todayPracticeAnswers,
+    todayExamAnswers,
+    todayCaseCount,
+    todayCaseAnswers,
+  ] = await Promise.all([
     prisma.userAnswer.count({
       where: { userId, createdAt: { gte: todayRange.start, lt: todayRange.end } },
     }),
@@ -359,22 +371,44 @@ export async function buildLearningKnowledgeBase(userId: string) {
     }),
   ]);
 
-  const wrongQuestionIds = wrongNotes.map((note) => note.questionId);
-  const examWrongAnswers = wrongQuestionIds.length
-    ? await prisma.examAnswer.findMany({
-        where: {
-          questionId: { in: wrongQuestionIds },
-          selectedOptionId: { not: null },
-          isCorrect: false,
-          examAttempt: { userId, status: 'COMPLETED' },
-        },
-        select: {
-          questionId: true,
-          selectedOption: { select: { id: true, label: true, content: true } },
-          examAttempt: { select: { finishedAt: true, startedAt: true } },
-        },
-      })
-    : [];
+  return {
+    todayPracticeChoiceCount,
+    todayPracticeWrongCount,
+    todayExamChoiceCount,
+    todayExamWrongCount,
+    todayPracticeAnswers,
+    todayExamAnswers,
+    todayCaseCount,
+    todayCaseAnswers,
+  };
+}
+
+export async function buildLearningKnowledgeBase(userId: string) {
+  const todayRange = getTodayRange();
+  const todayKey = getChinaDateKey(new Date());
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { name: true, targetExamDate: true, createdAt: true },
+  });
+
+  const [analysis, stableData, todayData] = await Promise.all([
+    getOrSetAnalysis(userId, () => getUserAnalysis(userId, user?.targetExamDate)),
+    getOrSetStable(userId, () => fetchStableData(userId)),
+    fetchTodayData(userId, todayRange),
+  ]);
+
+  const { activePlan, wrongNotes, recentExams, examWrongAnswers } = stableData;
+  const {
+    todayPracticeChoiceCount,
+    todayPracticeWrongCount,
+    todayExamChoiceCount,
+    todayExamWrongCount,
+    todayPracticeAnswers,
+    todayExamAnswers,
+    todayCaseCount,
+    todayCaseAnswers,
+  } = todayData;
 
   const latestExamWrongByQuestion = new Map<string, (typeof examWrongAnswers)[number]>();
   for (const answer of examWrongAnswers) {
@@ -490,7 +524,7 @@ ${todayTasks.map((task, index) => `${index + 1}. ${task}`).join('\n') || '今日
 
   const context = `## 学生当前学习情况知识库
 使用规则：
-- 以下数据是该学生的真实学习上下文。回答“今天错题/今天做题/错题本/学习计划/薄弱点”时，优先使用对应明细，不要要求学生再上传截图或题干。
+- 以下数据是该学生的真实学习上下文。回答"今天错题/今天做题/错题本/学习计划/薄弱点"时，优先使用对应明细，不要要求学生再上传截图或题干。
 - 如果明细里已经列出题干、学生选择、正确答案和解析，可以直接据此复盘。
 - 不要编造没有出现在数据中的成绩、题目、选项、计划或日期。若某类数据为空或被截断，要明确说明。
 
