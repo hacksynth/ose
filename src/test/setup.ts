@@ -91,6 +91,67 @@ async function seedMinimalQuestionBank() {
   }
 }
 
+async function seedCaseQuestion() {
+  await prisma.question.upsert({
+    where: { id: 'test-case-question-1' },
+    update: {
+      content: 'A company needs to design a database management system for its operations.',
+      type: 'CASE_ANALYSIS',
+    },
+    create: {
+      id: 'test-case-question-1',
+      content: 'A company needs to design a database management system for its operations.',
+      type: 'CASE_ANALYSIS',
+      difficulty: 2,
+      year: 2097,
+      session: 'PM',
+      questionNumber: 1,
+      explanation: 'Database design involves ER modeling and normalization.',
+      knowledgePointId: 'test-child',
+      isAIGenerated: false,
+      aiGeneratedBy: null,
+      createdByUserId: null,
+    },
+  });
+
+  await prisma.caseScenario.upsert({
+    where: { questionId: 'test-case-question-1' },
+    update: { background: 'A company has products, customers, and orders. Design an appropriate database.' },
+    create: {
+      id: 'test-case-scenario-1',
+      questionId: 'test-case-question-1',
+      background: 'A company has products, customers, and orders. Design an appropriate database.',
+    },
+  });
+
+  for (const sub of [
+    {
+      id: 'test-sub-q-1',
+      subNumber: 1,
+      content: 'Design the ER diagram for the company database.',
+      answerType: 'SHORT_ANSWER' as const,
+      referenceAnswer: 'entities relationships keys primary foreign',
+      score: 5,
+      explanation: 'Identify entities, attributes, and relationships.',
+    },
+    {
+      id: 'test-sub-q-2',
+      subNumber: 2,
+      content: 'Normalize the schema to 3NF.',
+      answerType: 'SHORT_ANSWER' as const,
+      referenceAnswer: 'normalization normal form functional dependency',
+      score: 5,
+      explanation: 'Apply normalization rules to remove redundancy.',
+    },
+  ]) {
+    await prisma.caseSubQuestion.upsert({
+      where: { id: sub.id },
+      update: { referenceAnswer: sub.referenceAnswer },
+      create: { ...sub, caseScenarioId: 'test-case-scenario-1' },
+    });
+  }
+}
+
 async function prepareDatabase() {
   const prismaCli = require.resolve('prisma/build/index.js');
   execFileSync(
@@ -103,6 +164,7 @@ async function prepareDatabase() {
     }
   );
   await seedMinimalQuestionBank();
+  await seedCaseQuestion();
 }
 
 const globalForSetup = globalThis as typeof globalThis & {
