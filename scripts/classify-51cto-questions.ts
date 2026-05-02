@@ -21,6 +21,7 @@ import { getAIProvider, resolveAIConfig } from '@/lib/ai/index';
 import { parseAIJson } from '@/lib/ai/json';
 import { prisma } from '@/lib/prisma';
 import { KNOWLEDGE_TREE, leafKnowledgePoints } from '@/prisma/knowledge-tree';
+import { htmlToText } from '@/lib/utils/html-to-text';
 
 const SEED_PATH = path.resolve(process.cwd(), 'data/51cto-seed.json');
 const CLASS_PATH = path.resolve(process.cwd(), 'data/51cto-classifications.json');
@@ -91,17 +92,7 @@ type RawClassification = {
 // ---------- Helpers ----------
 
 function stripHtml(s: string): string {
-  return (s ?? '')
-    .replace(/<img[^>]*>/gi, '[图]')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/p>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&nbsp;/gi, ' ')
-    .replace(/&amp;/gi, '&')
-    .replace(/&lt;/gi, '<')
-    .replace(/&gt;/gi, '>')
-    .replace(/&quot;/gi, '"')
-    .replace(/&#39;/gi, "'")
+  return htmlToText(s)
     .replace(/[ \t]+/g, ' ')
     .replace(/\n{3,}/g, '\n\n')
     .trim();
