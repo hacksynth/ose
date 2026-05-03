@@ -21,6 +21,7 @@ env:
   AUTH_SECRET: release-secret
   NEXT_PUBLIC_EXAM_DATE: 2026-05-23
   OSE_MOBILE_URL: ${{ vars.OSE_MOBILE_URL || secrets.OSE_MOBILE_URL }}
+  APPIMAGE_EXTRACT_AND_RUN: 1
 
 jobs:
   build:
