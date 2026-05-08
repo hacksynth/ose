@@ -113,7 +113,7 @@
     "eslint-config-next": "^15.5.15",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
-    "next-test-api-route-handler": "^5.0.4",
+    "next-test-api-route-handler": "^5.0.5",
     "playwright": "^1.59.1",
     "postcss": "^8.5.10",
     "prettier": "^3.8.3",
